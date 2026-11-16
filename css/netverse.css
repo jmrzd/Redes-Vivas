@@ -87,3 +87,59 @@ body.intro-active { overflow: hidden; }
 @media (prefers-reduced-motion: reduce) {
   .intro-actions button, .btn, .aba, .btn-topo { transition: none; }
 }
+
+/* 2026 visual refresh: animated 3D network stage with large visible equipment. */
+.netverse-intro { background:#020712; }
+#intro-canvas { cursor:grab; }
+.intro-vignette { background:linear-gradient(90deg,rgba(2,6,16,.40) 0%,rgba(2,6,16,.12) 44%,transparent 69%),radial-gradient(ellipse 80% 70% at 60% 83%,transparent 34%,rgba(0,4,11,.34) 100%); }
+.intro-content {
+  left:clamp(28px,5vw,88px);top:49%;transform:translateY(-50%);
+  align-items:flex-start;text-align:left;width:min(40%,540px);
+  padding:20px 0;z-index:2;
+}
+.intro-content h1 { font-size:clamp(58px,5.6vw,104px);letter-spacing:.045em;padding-left:0;line-height:.96;white-space:normal;text-shadow:0 0 40px rgba(0,210,255,.23); }
+.intro-content h1 span { display:block;letter-spacing:.065em; }
+.intro-emblem { margin-bottom:17px; }
+.intro-eyebrow { letter-spacing:.19em;color:#8ba6c4; }
+.intro-sub { font-size:clamp(11px,1.1vw,16px);margin-top:22px;letter-spacing:.17em;padding-left:0; }
+.intro-tagline { letter-spacing:.15em;color:#a2b9cc;line-height:1.9;margin:13px 0 24px;font-size:clamp(10px,.8vw,12px); }
+.intro-actions { justify-content:flex-start;gap:9px; }
+.intro-actions button { backdrop-filter:blur(12px);background:linear-gradient(140deg,rgba(28,53,87,.94),rgba(12,26,50,.97)); }
+.intro-actions .intro-cta { background:linear-gradient(110deg,#06ddf5,#538afa);box-shadow:0 0 24px rgba(14,193,242,.33); }
+.intro-help { max-width:420px;line-height:1.6;margin-top:20px;color:#8bacc6; }
+.intro-device-info { background:rgba(7,25,48,.94);border-color:#1b9bbb;color:#c5f3ff;bottom:42px; }
+.intro-footer { left:5%;right:auto;bottom:18px;letter-spacing:.14em;color:#526d8e; }
+.intro-telemetry { position:absolute;z-index:2;right:3.5%;top:13%;display:flex;flex-direction:column;align-items:flex-end;gap:6px;pointer-events:none;font:600 11px var(--f-mono);color:#a7c7e1;letter-spacing:.12em; }
+.intro-telemetry strong { font-size:11px;color:#29f5da;font-weight:700; }
+.intro-telemetry strong::before { content:"";width:7px;height:7px;border-radius:50%;background:#29f5da;display:inline-block;margin-right:7px;box-shadow:0 0 12px #29f5da;animation:telemetryPulse 2.5s infinite; }
+.intro-telemetry small { font-size:10px;color:#6883a1; }
+@keyframes telemetryPulse { 50% {opacity:.5;} }
+@media (min-width:751px) and (max-width:1090px) {
+  .intro-content {left:3.2%;width:43%;}
+  .intro-content h1 {font-size:clamp(44px,6.1vw,73px);}
+  .intro-actions button {font-size:11px;padding:10px 12px;}
+}
+@media (max-width:750px) {
+  .intro-content {left:50%;top:7%;transform:translateX(-50%);width:min(96%,500px);align-items:center;text-align:center;padding:0 7px;}
+  .intro-content h1 {font-size:clamp(40px,10vw,60px);line-height:1;}
+  .intro-content h1 span {display:inline;}
+  .intro-emblem {margin-bottom:5px;}
+  .intro-eyebrow {font-size:8px;letter-spacing:.14em;}
+  .intro-sub {font-size:10px;letter-spacing:.14em;margin-top:9px;}
+  .intro-tagline {margin:8px 0 12px;letter-spacing:.08em;font-size:9px;}
+  .intro-actions {justify-content:center;width:min(98%,410px);gap:6px;}
+  .intro-actions button {font-size:10px;flex:0 0 auto;min-height:39px;padding:8px 10px;}
+  .intro-help {margin-top:9px;font-size:10px;max-width:90%;}
+  .intro-telemetry {top:auto;bottom:48px;right:11px;align-items:flex-end;font-size:9px;}
+  .intro-telemetry small {font-size:8px;}
+  .intro-footer {left:8px;right:auto;font-size:8px;letter-spacing:.03em;}
+  .intro-device-info {bottom:63px;}
+}
+@media (max-height:690px) and (min-width:751px) {
+  .intro-content {top:49%;}
+  .intro-content h1 {font-size:clamp(48px,6.0vw,78px);}
+  .intro-emblem {margin-bottom:4px;}
+  .intro-sub {margin-top:12px;}
+  .intro-tagline {margin:5px 0 12px;}
+}
+@media (prefers-reduced-motion:reduce) { .intro-telemetry strong::before {animation:none;} }

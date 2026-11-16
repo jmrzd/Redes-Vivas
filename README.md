@@ -4,7 +4,9 @@
 
 ### O universo vivo das redes de computadores
 
-**Um laboratório interativo com 12 módulos, cenários animados e visualização em perspectiva 3D — direto no navegador.**
+**12 módulos de redes de computadores • Laboratório interativo • Equipamentos 3D estilizados • Animação em tempo real**
+
+🎮 **[Abrir a demonstração ao vivo](https://redes-vivas.vercel.app/)** · 💻 [Código-fonte](https://github.com/jmrzd/Redes-Vivas)
 
 ![HTML5](https://img.shields.io/badge/HTML5-estrutura-E34F26?logo=html5&logoColor=white) ![CSS3](https://img.shields.io/badge/CSS3-interface-1572B6?logo=css3&logoColor=white) ![JavaScript](https://img.shields.io/badge/JavaScript-simulações-F7DF1E?logo=javascript&logoColor=000) ![Sem dependências](https://img.shields.io/badge/depend%C3%AAncias-zero-16B39A)
 
@@ -12,7 +14,7 @@
 
 ## Prévia
 
-![Abertura interativa do Redes Vivas](assets/preview-intro.webp)
+![Abertura animada com equipamentos tridimensionais, rede de circuitos e pacotes luminosos](assets/preview-intro.webp)
 
 ![Simulação da viagem de uma página web](assets/preview-laboratorio.webp)
 
@@ -20,7 +22,7 @@
 
 **Redes Vivas** é um simulador educacional de **Introdução à Rede de Computadores**, criado para facilitar a compreensão de protocolos, equipamentos, tráfego, segurança e desempenho. O usuário pode acompanhar pacotes passando pela rede, alterar parâmetros, avançar os eventos passo a passo e resolver desafios.
 
-A experiência visual utiliza uma **abertura 3D projetada em Canvas 2D**: equipamentos com faces sombreadas, iluminação estilizada, perspectiva, movimento de câmera e conexões animadas. O laboratório conserva as simulações originais e apresenta equipamentos com aparência tridimensional estilizada. **Não utiliza WebGL nem modelos 3D pesados**, para funcionar em computadores e celulares mais modestos.
+A experiência visual inclui uma **cena 3D estilizada animada em Canvas 2D**, com equipamentos construídos em faces geométricas, luzes de status, portas de rede, antenas, telas, câmera em movimento e pacotes percorrendo os cabos. **O laboratório também recebeu modelos visuais específicos para PCs, switches, roteadores e servidores**, mantendo todos os módulos e suas regras de simulação. Não utiliza WebGL ou bibliotecas pesadas.
 
 > **Importante:** as redes, endereços e comandos do projeto são **simulados** para fins didáticos. A aplicação não envia pacotes reais, não consulta servidores DNS reais e não executa varreduras externas.
 
@@ -43,7 +45,15 @@ A experiência visual utiliza uma **abertura 3D projetada em Canvas 2D**: equipa
 
 ## Visual 3D leve
 
-Os equipamentos (PC, switch, roteador e servidores) têm **volume projetado e faces com iluminação**, com portas, LEDs, telas e antenas. Arraste a cena para mudar o ângulo. Tudo roda em **Canvas 2D**, sem Three.js nem modelos externos, preservando desempenho em celulares. Não são malhas WebGL reais.
+A abertura agora utiliza uma **placa de circuitos em perspectiva**, com:
+
+- **Modelos com volume:** notebook com tela e teclado; switch com portas de rede; roteador com antenas; racks de servidores com ventoinhas e LEDs.
+- **Animação de rede:** pacotes luminosos percorrem os enlaces; anéis indicam os nós ativos e a câmera se move suavemente.
+- **Interação:** arraste para girar a cena, role para aproximar, clique nos equipamentos e use *Explorar o universo* para mudar o ângulo.
+- **Interior do laboratório:** dispositivos desenhados com geometria sombreada e modelos distintos, respeitando as posições e áreas clicáveis existentes.
+- **Modo leve e acessibilidade:** limita a resolução, reduz efeitos e respeita `prefers-reduced-motion`.
+
+**Como funciona:** o projeto usa **projeção 3D desenhada em Canvas 2D**, sem Three.js, WebGL, downloads de modelos ou texturas externas. Os equipamentos são modelos vetoriais estilizados, não malhas 3D de jogos. Assim, a abertura permanece leve inclusive em celulares.
 
 ## Principais recursos
 
@@ -64,11 +74,11 @@ Os equipamentos (PC, switch, roteador e servidores) têm **volume projetado e fa
 Não é necessário instalar Node.js, Python nem baixar bibliotecas. Se preferir trabalhar com o VS Code, use **Live Server**.
 
 ```bash
-git clone https://github.com/SEU-USUARIO/Redes-Vivas.git
+git clone https://github.com/jmrzd/Redes-Vivas.git
 cd Redes-Vivas
 ```
 
-> Substitua `SEU-USUARIO` pelo nome real do seu perfil no GitHub.
+> Você também pode acessar o site diretamente em **https://redes-vivas.vercel.app/**.
 
 ## Controles
 
@@ -98,7 +108,9 @@ Redes-Vivas/
 │   ├── app.js           # Motor original + 12 laboratórios
 │   └── intro.js         # Abertura 3D, interações e modo leve
 ├── assets/
-│   └── favicon.svg      # Identidade visual
+│   ├── favicon.svg      # Identidade visual
+│   ├── preview-intro.webp  # Captura da abertura 3D
+│   └── preview-laboratorio.webp # Captura de um cenário
 └── README.md
 ```
 
@@ -106,13 +118,17 @@ Redes-Vivas/
 
 Edite **`js/config.js`** para preencher instituição, turma, professor e integrantes. O arquivo começa com o objeto `window.REDES_VIVAS`.
 
-## Publicar gratuitamente com GitHub Pages
+## Publicação na Vercel
 
-1. Envie os **arquivos e pastas extraídos** para a raiz do repositório (não envie apenas o `.zip`).
-2. Acesse **Settings → Pages** no repositório.
-3. Em *Build and deployment*, selecione **Deploy from a branch**.
-4. Selecione `main`, pasta `/ (root)` e clique em **Save**.
-5. Após a publicação, o endereço costuma seguir o formato `https://SEU-USUARIO.github.io/Redes-Vivas/`.
+O repositório está conectado ao projeto **`redes-vivas`** na Vercel. O site usa a raiz do projeto e **não tem etapa de build** (HTML, CSS e JavaScript estáticos).
+
+1. Abra [redes-vivas.vercel.app](https://redes-vivas.vercel.app/).
+2. O código-fonte está em [github.com/jmrzd/Redes-Vivas](https://github.com/jmrzd/Redes-Vivas).
+3. Alterações na branch `main` acionam o fluxo de implantação conectado na Vercel.
+
+## Testes
+
+Os principais controles, a abertura, a demonstração e as **12 abas** foram exercitados em navegadores automatizados nas resoluções de desktop e celular. A verificação de sintaxe dos arquivos JavaScript também foi realizada. O teste não substitui uma avaliação visual e de desempenho em todos os dispositivos.
 
 ## Créditos
 
