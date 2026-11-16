@@ -16,13 +16,17 @@
 
 ![Abertura animada com equipamentos tridimensionais, rede de circuitos e pacotes luminosos](assets/preview-intro.webp)
 
-![Simulação da viagem de uma página web](assets/preview-laboratorio.webp)
+![Laboratório 3D leve: simulação da viagem de uma página web](assets/preview-laboratorio.webp)
+
+**Versão para celular:**
+
+![Laboratório 3D responsivo para celular com zoom e controles de toque](assets/preview-mobile.webp)
 
 ## Sobre
 
 **Redes Vivas** é um simulador educacional de **Introdução à Rede de Computadores**, criado para facilitar a compreensão de protocolos, equipamentos, tráfego, segurança e desempenho. O usuário pode acompanhar pacotes passando pela rede, alterar parâmetros, avançar os eventos passo a passo e resolver desafios.
 
-A experiência visual inclui uma **cena 3D estilizada animada em Canvas 2D**, com equipamentos construídos em faces geométricas, luzes de status, portas de rede, antenas, telas, câmera em movimento e pacotes percorrendo os cabos. **O laboratório também recebeu modelos visuais específicos para PCs, switches, roteadores e servidores**, mantendo todos os módulos e suas regras de simulação. Não utiliza WebGL ou bibliotecas pesadas.
+A experiência visual inclui uma **cena 3D estilizada animada em Canvas 2D**, com equipamentos construídos em faces geométricas, luzes de status, portas de rede, antenas, telas, câmera em movimento e pacotes percorrendo os cabos. **Todos os laboratórios agora usam modelos com volume específicos para equipamentos de rede**, mantendo todos os módulos e suas regras de simulação. Não utiliza WebGL ou bibliotecas pesadas.
 
 > **Importante:** as redes, endereços e comandos do projeto são **simulados** para fins didáticos. A aplicação não envia pacotes reais, não consulta servidores DNS reais e não executa varreduras externas.
 
@@ -54,6 +58,16 @@ A abertura agora utiliza uma **placa de circuitos em perspectiva**, com:
 - **Modo leve e acessibilidade:** limita a resolução, reduz efeitos e respeita `prefers-reduced-motion`.
 
 **Como funciona:** o projeto usa **projeção 3D desenhada em Canvas 2D**, sem Three.js, WebGL, downloads de modelos ou texturas externas. Os equipamentos são modelos vetoriais estilizados, não malhas 3D de jogos. Assim, a abertura permanece leve inclusive em celulares.
+
+## Laboratório 3D leve nos 12 tópicos
+
+- Os **10 tópicos com simuladores** exibem equipamentos volumétricos em Canvas 2D; **Início e Glossário/quiz** também mostram uma mini-rede ilustrada e animada que leva à simulação da página web.
+- Equipamentos com geometria original: computadores, switches, hubs, roteadores, servidores, firewalls, dispositivos sem fio, sensores, câmeras, nuvem, IoT, controladores e outros elementos das cenas.
+- Controles **◀ / ▶** em cada simulação mudam o **ângulo aparente dos equipamentos** e o ponto de fuga do piso. É uma projeção estilizada, **não uma câmera WebGL livre**.
+- Controles **− / +** aproximam a câmera de 100% a 225%; após aproximar, arraste o palco com o mouse ou o dedo para explorar a rede. Os cliques nos nós e nos pacotes continuam funcionando por transformação inversa de coordenadas.
+- LED e base luminosa reagem à atividade; os pacotes continuam representando a lógica real da **simulação didática**, não tráfego externo.
+- Arte de equipamentos pré-renderizada com cache (sem criar gradientes de novo a cada quadro); taxas de quadros reduzidas no celular, DPI limitado e **Modo leve** opcional.
+- Layout mobile com 12 abas roláveis horizontalmente, botões maiores, palco alto e painéis empilhados; respeita preferências do sistema para redução de movimento.
 
 ## Principais recursos
 
@@ -94,6 +108,8 @@ cd Redes-Vivas
 | `PageUp` / `PageDown` | Navega entre módulos. |
 | `+` / `-` | Ajusta a velocidade. |
 | **Modo leve** | Reduz efeitos para equipamentos de menor desempenho. |
+| **◀ / ▶** | Altera o ângulo aparente dos equipamentos em cada laboratório 3D. |
+| **− / +** | Afasta ou aproxima a rede (até 225%). Quando ampliada, arraste para navegar. |
 
 ## Estrutura
 
@@ -105,6 +121,7 @@ Redes-Vivas/
 │   └── netverse.css     # Estilo futurista e responsividade
 ├── js/
 │   ├── config.js        # Dados do projeto e integrantes
+│   ├── lab3d.js         # Desenhos dos equipamentos 3D, cache e mini-rede
 │   ├── app.js           # Motor original + 12 laboratórios
 │   └── intro.js         # Abertura 3D, interações e modo leve
 ├── assets/
@@ -137,3 +154,8 @@ Trabalho acadêmico de **Introdução à Rede de Computadores** — **Afya**. O 
 ---
 
 <div align="center"><sub>Projeto educacional • HTML, CSS e JavaScript sem frameworks</sub></div>
+
+
+### Versão 3D responsiva (novembro de 2026)
+
+A evolução visual foi implementada mantendo intactos os 12 tópicos, os cenários, os controles Iniciar/Pausar/Próximo passo/Reiniciar, o quiz e as missões. O desenho 3D é leve (Canvas 2D com cache de sprites), não exige internet para renderizar e não adiciona dependências.

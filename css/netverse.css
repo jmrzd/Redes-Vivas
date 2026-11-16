@@ -143,3 +143,104 @@ body.intro-active { overflow: hidden; }
   .intro-tagline {margin:5px 0 12px;}
 }
 @media (prefers-reduced-motion:reduce) { .intro-telemetry strong::before {animation:none;} }
+
+/* === 3D LAB v2 — all simulator scenes, fluid mobile layout === */
+.rv3d-toolbar {
+  display:flex; align-items:center; justify-content:space-between; flex-wrap:wrap;
+  gap:8px 13px; padding:8px 11px; margin:0 0 9px;
+  background:linear-gradient(108deg,rgba(7,34,61,.95),rgba(14,32,61,.95));
+  border:1px solid #24516d; border-radius:11px;
+  color:#b5d7ed; font-size:12px;
+}
+.rv3d-indicator {color:#53e1ff;font:800 11px/1.2 var(--f-mono); letter-spacing:.06em;}
+.rv3d-toolbar-info {margin-right:auto;color:#8daac8;font-size:11px;}
+.rv3d-view-buttons {display:flex;align-items:center;gap:5px;}
+.rv3d-view-buttons button {
+  min-width:34px;min-height:34px;border:1px solid #315b7c;border-radius:7px;
+  background:linear-gradient(180deg,#173b57,#10253c);color:#88eaff;cursor:pointer;
+  font:700 12px var(--f-body);
+}
+.rv3d-view-buttons button:active {background:#2f607d;}
+.rv3d-angle-value {min-width:96px;text-align:center;color:#eefbff;font:600 11px var(--f-mono);}
+.painel-palco {background:linear-gradient(155deg,var(--surface),var(--surface-2));}
+.moldura {
+  isolation:isolate;
+  border-color:#255776;
+  box-shadow:inset 0 0 25px rgba(9,108,173,.13),0 10px 28px rgba(0,0,0,.15);
+}
+.aba.ativa .aba-led {box-shadow:0 0 0 3px rgba(53,242,199,.18),0 0 10px rgba(45,252,196,.55);}
+.mapa button {border-bottom-width:3px;box-shadow:0 5px 0 rgba(0,0,0,.1);}
+.mapa button:hover {transform:translateY(-2px);}
+/* Rendered previews in the two non-laboratory modules: introductory map and glossary. */
+.rv3d-preview {
+  margin-top:16px;overflow:hidden;border:1px solid #28627e;border-radius:12px;
+  background:#081b33;box-shadow:0 10px 20px rgba(0,0,0,.16);
+}
+.rv3d-preview-heading {
+  display:flex;gap:8px;flex-wrap:wrap;align-items:center;justify-content:space-between;
+  padding:9px 11px;color:#78e4ff;background:#0d2847;
+}
+.rv3d-preview-heading b {font:750 11px var(--f-mono);letter-spacing:.06em;}
+.rv3d-preview-heading small {color:#a4bfd5;font:11px var(--f-mono);margin-left:5px;}
+.rv3d-preview-heading button {min-height:32px;padding:5px 9px;color:#041826;background:#61ddff;border:0;border-radius:7px;font-weight:700;font-size:11px;cursor:pointer;}
+.rv3d-preview-canvas {display:block;width:100%;height:160px;}
+#sec-glossario > .rv3d-preview {margin:0 0 13px;}
+/* Mobile: card controls, touch targets, overflow-safe educational tables. */
+@media (max-width: 760px) {
+  .app {padding-left:max(10px,env(safe-area-inset-left));padding-right:max(10px,env(safe-area-inset-right));}
+  .topo {gap:9px;align-items:flex-start;}
+  .marca {flex:1 1 100%;}
+  .marca small {font-size:11px;}
+  .topo-acoes {width:100%;justify-content:space-between;flex-wrap:wrap;}
+  .regua {display:flex;gap:6px;overflow-x:auto;overscroll-behavior-inline:contain;scroll-snap-type:x proximity;scroll-padding:7px;}
+  .aba {min-width:109px;min-height:59px;scroll-snap-align:start;flex:0 0 109px;}
+  .lab-grade {display:grid;grid-template-columns:minmax(0,1fr);}
+  .painel {padding:10px 9px;}
+  .painel-palco {padding:8px;}
+  .lab-tit {flex:1 1 100%;}
+  .lab-tit h2 {font-size:21px;}
+  .lab-tit p {font-size:13px;}
+  .cenarios {width:100%;overflow-x:auto;flex-wrap:nowrap;padding-bottom:3px;}
+  .cen {flex:0 0 auto;min-height:36px;}
+  .rv3d-toolbar {padding:7px 8px;gap:5px;}
+  .rv3d-toolbar-info {display:none;}
+  .rv3d-view-buttons {margin-left:auto;}
+  .rv3d-angle-value {min-width:85px;}
+  .tr-botoes {display:grid;grid-template-columns:repeat(2,minmax(0,1fr));width:100%;gap:7px;}
+  .tr-botoes .btn {min-height:43px;padding:9px 7px;}
+  .transporte {flex-direction:column;align-items:stretch;gap:9px;}
+  .tr-vel {width:100%;justify-content:space-between;gap:8px;}
+  .tr-vel input {flex:1;max-width:none;min-width:100px;}
+  .hud {overflow-x:auto;max-width:100%;}
+  .tv {min-width:max-content;}
+  .log-l {grid-template-columns:20px 39px 9px minmax(0,1fr);gap:5px;}
+  .prosc {grid-template-columns:1fr;}
+  .regra {min-width:0;}
+  .rv3d-preview-heading small {display:block;margin-left:0;margin-top:3px;}
+  .rv3d-preview-canvas {height:148px;}
+  .ini-capa {padding:14px 12px;}
+  .glos-grade {grid-template-columns:1fr;}
+}
+@media (max-width: 400px) {
+  .painel-cab {gap:7px;}
+  .passo-caixa {font-size:11px;}
+  .rv3d-indicator {font-size:10px;}
+  .rv3d-view-buttons button {min-width:31px;min-height:33px;}
+  .rv3d-angle-value {font-size:10px;min-width:73px;}
+  .hud {font-size:11px;}
+  .marca strong {font-size:19px;}
+}
+@media (prefers-reduced-motion:reduce){
+  .rv3d-toolbar,.rv3d-preview,.painel-palco{transition:none;animation:none;}
+}
+/* Camera zoom is opt-in; at 100% mobile scroll remains natural. */
+.rv3d-zoom-buttons {display:flex;align-items:center;gap:5px;padding-left:10px;border-left:1px solid #345a73;}
+.rv3d-zoom-buttons button {min-width:34px;min-height:34px;border-radius:8px;border:1px solid #315b7c;background:#102b42;color:#8de9ff;cursor:pointer;font-size:18px;font-weight:700;}
+.rv3d-zoom-value {min-width:45px;color:#fff;font:650 11px var(--f-mono);text-align:center;}
+canvas.palco.rv3d-zoomed {touch-action:none;cursor:grab;}
+canvas.palco.rv3d-zoomed:active {cursor:grabbing;}
+@media (max-width:760px) {
+  .rv3d-zoom-buttons {padding-left:7px;gap:4px;}
+  .rv3d-zoom-buttons button {min-width:34px;min-height:36px;}
+  .rv3d-toolbar {justify-content:space-between;}
+}

@@ -298,7 +298,7 @@ class Palco {
     const estreito = W < 560;
     let H;
     const minimo = this.minimo || 300;
-    if (estreito) H = Math.round(limitar(W * .95, minimo, 430));
+    if (estreito) H = Math.round(limitar(W * 1.18, Math.max(minimo, 370), 530));
     else {
       H = Math.round(limitar(W * this.proporcao, minimo, 580));
       H = Math.min(H, Math.max(minimo + 20, window.innerHeight - 286));   // cabe na tela sem rolar
@@ -309,7 +309,7 @@ class Palco {
     this.W = W; this.H = H; this.dpr = dpr; this.estreito = estreito;
     this.cv.width = Math.round(W * dpr); this.cv.height = Math.round(H * dpr);
     this.cv.style.height = H + 'px';
-    this.u = limitar(Math.min(W / 17.5, H / 6.8), 27, 56);        // tamanho base dos ícones
+    this.u = limitar(Math.min(W / (estreito ? 11.7 : 14.5), H / (estreito ? 11.2 : 7)), estreito ? 31 : 29, estreito ? 40 : 65);        // tamanho base dos ícones
     return true;
   }
 }
@@ -511,6 +511,12 @@ class Cena {
     const p = this.palco, c = p.ctx, W = p.W, H = p.H;
     c.setTransform(p.dpr, 0, 0, p.dpr, 0, 0);
     c.clearRect(0, 0, W, H);
+    // Camera changes only the rendering transform. Simulation time, paths and
+    // normalized topologies stay untouched; pointer hit-tests invert it.
+    const cam = this.lab.camera3d || { zoom:1, px:0, py:0 };
+    c.translate(W / 2 + cam.px, H / 2 + cam.py);
+    c.scale(cam.zoom, cam.zoom);
+    c.translate(-W / 2, -H / 2);
     this.F = { corpo: Tema.cor('--f-body'), mono: Tema.cor('--f-mono'), titulo: Tema.cor('--f-display') };
     this.areas.length = 0;
     // Perspective floor: lightweight vector lines instead of expensive texture assets.
@@ -519,15 +525,16 @@ class Cena {
       c.save();
       c.strokeStyle = Tema.cor('--stage-dot');
       c.lineWidth = .6; c.globalAlpha = .35;
-      const horizon = H * .22;
+      const horizon = H * .25;
+      const vanish = W * (.5 + ((this.lab.view3d || 1) - 1) * .065);
       for (let y = 0; y < 9; y++) {
         const t = (y / 8) ** 1.7;
         const gy = horizon + t * (H - horizon);
         c.beginPath(); c.moveTo(0, gy); c.lineTo(W, gy); c.stroke();
       }
       for (let x = -7; x <= 7; x++) {
-        c.beginPath(); c.moveTo(W * .5 + x * 18, horizon);
-        c.lineTo(W * .5 + x * W * .12, H); c.stroke();
+        c.beginPath(); c.moveTo(vanish + x * 18, horizon);
+        c.lineTo(vanish + x * W * .12, H); c.stroke();
       }
       c.restore();
     }
@@ -609,57 +616,40 @@ class Cena {
       c.fillStyle = Tema.cor('--ink-2'); rr(c, p.x - 5, p.y - 9, 10, 18, 3); c.fill();
       n.caixa = null; return;
     }
-    const t = u * n.tam, tinta = Tema.cor(n.desligado ? '--ink-3' : (n.cor || '--node-ink'));
-    c.save();
-    const live = !n.desligado;
-    const depth = Math.max(4, Math.min(11, t * .19));
-    const x = p.x - t / 2, y = p.y - t / 2;
-    // Perspective pedestal and visible top/right faces. All node hitboxes remain unchanged.
-    c.save();
-    c.globalAlpha = live ? .87 : .28;
-    c.fillStyle = 'rgba(0,0,0,.30)';
-    c.beginPath(); c.ellipse(p.x, p.y + t * .66, t * .68, t * .2, 0, 0, TAU); c.fill();
-    c.strokeStyle = live ? Tema.cor(n.cor || '--accent') : Tema.cor('--ink-3');
-    c.lineWidth = live ? 1.8 : .8;
-    c.beginPath(); c.ellipse(p.x, p.y + t * .61, t * .64, t * .17, 0, 0, TAU); c.stroke();
-    c.restore();
-    c.save();
-    c.fillStyle = live ? '#132f50' : '#17202d';
-    c.beginPath(); c.moveTo(x, y); c.lineTo(x + depth, y - depth);
-    c.lineTo(x + t + depth, y - depth); c.lineTo(x + t, y);
-    c.closePath(); c.fill();
-    c.fillStyle = live ? '#102238' : '#131a25';
-    c.beginPath(); c.moveTo(x + t, y); c.lineTo(x + t + depth, y - depth);
-    c.lineTo(x + t + depth, y + t - depth); c.lineTo(x + t, y + t);
-    c.closePath(); c.fill();
-    c.strokeStyle = live ? Tema.cor(n.cor || '--p-tcp') : '#4b566a';
-    c.lineWidth = 1; c.globalAlpha = .65;
-    c.beginPath(); c.moveTo(x + 2, y); c.lineTo(x + depth + 2, y - depth);
-    c.lineTo(x + t + depth, y - depth); c.stroke();
-    c.restore();
-    if (n.brilho > 0) {
-      c.globalAlpha = n.brilho * .55; c.strokeStyle = Tema.cor(n.cor || '--accent'); c.lineWidth = 3;
-      rr(c, p.x - t / 2 - 5, p.y - t / 2 - 5, t + 10, t + 10, t * .26 + 4); c.stroke();
-      c.globalAlpha = 1;
-    }
+    const density = this.nos.size >= 9 ? .85 : this.nos.size >= 7 ? .93 : 1;
+    const t = u * n.tam * density;
     const lite = document.documentElement.classList.contains('fx-lite');
-    c.shadowColor = lite ? 'transparent' : 'rgba(0,193,255,.20)'; c.shadowBlur = lite ? 0 : 9; c.shadowOffsetY = 2;
-    const front = c.createLinearGradient(x, y, x + t, y + t);
-    if (n.desligado) { front.addColorStop(0, '#202735'); front.addColorStop(1, '#121723'); }
-    else { front.addColorStop(0, '#172d4a'); front.addColorStop(.48, '#0a172a'); front.addColorStop(1, '#071020'); }
-    c.fillStyle = front;
-    rr(c, p.x - t / 2, p.y - t / 2, t, t, Math.min(10,t*.19)); c.fill();
-    c.shadowColor = 'transparent';
-    c.strokeStyle = Tema.cor(n.desligado ? '--ink-3' : (n.cor || '--node-line')); c.lineWidth = n.cor ? 2 : 1.4;
-    if (this.sobre === n) { c.strokeStyle = Tema.cor('--accent'); c.lineWidth = 2.4; }
-    rr(c, p.x - t / 2, p.y - t / 2, t, t, Math.min(10,t*.19)); c.stroke();
-    // Tiny edge highlight, cheaper than postprocessing bloom.
-    c.save(); c.strokeStyle = 'rgba(255,255,255,.10)'; c.lineWidth = 1;
-    c.beginPath(); c.moveTo(x + 7, y + 5); c.lineTo(x + t - 7, y + 5); c.stroke(); c.restore();
-    c.translate(p.x, p.y); c.scale(t, t);
-    c.lineWidth = .055; c.lineCap = 'round'; c.lineJoin = 'round'; c.strokeStyle = tinta; c.fillStyle = tinta;
-    if (!equipamento3D(c, n.tipo, Tema.cor(n.desligado ? '--ink-3' : '--ok'), this.t)) {
-      (ICONES[n.tipo] || ICONES.pc)(c, { led: Tema.cor(n.desligado ? '--ink-3' : '--ok') });
+    const supported = !!(window.RedesVivas3D && window.RedesVivas3D.types.has(n.tipo));
+    const tint = Tema.cor(n.cor || '--p-tcp');
+    c.save();
+    // Isometric holo-stage: solid volume around the device, no square placeholder.
+    const pulse = this.lab.relogio && !lite && !window.matchMedia('(prefers-reduced-motion: reduce)').matches
+      ? .57 + .43 * Math.sin(this.t * .004 + p.x * .013) : .7;
+    c.fillStyle = 'rgba(0,0,0,.24)';
+    c.beginPath();c.ellipse(p.x, p.y + t * .37, t * .64, t * .19, 0, 0, TAU);c.fill();
+    c.fillStyle = lite ? 'rgba(13,36,56,.75)' : 'rgba(12,45,70,.94)';
+    c.beginPath();c.ellipse(p.x,p.y+t*.31,t*.58,t*.155,0,0,TAU);c.fill();
+    c.strokeStyle = n.desligado ? Tema.cor('--ink-3') : tint;
+    c.globalAlpha = n.desligado ? .27 : pulse * .78;
+    c.lineWidth = this.sobre===n ? 3 : 1.65;
+    c.beginPath();c.ellipse(p.x,p.y+t*.32,t*.60,t*.16,0,0,TAU);c.stroke();
+    c.globalAlpha = 1;
+    if (n.brilho>0) {
+      c.strokeStyle=tint;c.lineWidth=2.5;c.globalAlpha=n.brilho*.78;
+      c.beginPath();c.ellipse(p.x,p.y+t*.32,t*(.65+n.brilho*.16),t*.21,0,0,TAU);c.stroke();c.globalAlpha=1;
+    }
+    if (supported) {
+      const bob = !lite && !n.desligado && !window.matchMedia('(prefers-reduced-motion: reduce)').matches
+        ? Math.sin(this.t*.003 + p.x*.02) * 1.6 : 0;
+      window.RedesVivas3D.paint(c,n.tipo,p.x,p.y+bob,t,this.lab.view3d||1,n.desligado);
+    } else {
+      // Fallback for special non-equipment objects (joining points, custom lessons).
+      const x=p.x-t/2,y=p.y-t/2;
+      c.fillStyle=Tema.cor('--node');c.strokeStyle=Tema.cor('--node-line');c.lineWidth=1.5;
+      rr(c,x,y,t,t,Math.min(10,t*.2));c.fill();c.stroke();
+      c.translate(p.x,p.y);c.scale(t,t);
+      c.strokeStyle=Tema.cor('--node-ink');c.fillStyle=Tema.cor('--node-ink');c.lineWidth=.052;
+      (ICONES[n.tipo]||ICONES.pc)(c,{led: Tema.cor(n.desligado?'--ink-3':'--ok')});
     }
     c.restore();
     if (n.desligado) {
@@ -690,7 +680,8 @@ class Cena {
       if (n.sub) { c.font = (fs - 1.5) + 'px ' + this.F.mono; c.fillStyle = Tema.cor('--ink-2'); c.fillText(n.sub, p.x, p.y + t / 2 + 6 + fs + 1); }
     }
     c.restore();
-    n.caixa = { x: p.x - t / 2, y: p.y - t / 2, w: t, h: t };
+    const touch = Math.max(t * 1.13, this.palco.estreito ? 40 : t);
+    n.caixa = { x: p.x-touch/2, y: p.y-touch/2, w: touch, h: touch };
   }
 
   desPacote(c, pk) {
@@ -937,6 +928,35 @@ class Lab {
     this.elHud = h('div', { class: 'hud', hidden: true });
     this.elMoldura = h('div', { class: 'moldura' }, this.cv, this.elHud);
     this.palco = new Palco(this.elMoldura, this.cv);
+    this.view3d = 1;
+    this.camera3d = { zoom:1, px:0, py:0 };
+    this.viewLabel = h('output', { class:'rv3d-angle-value', 'aria-live':'polite' }, 'Isométrico');
+    const orbit = d => {
+      this.view3d = limitar(this.view3d + d, -2, 2);
+      this.viewLabel.textContent = this.view3d < 0 ? 'Esquerda' : this.view3d === 0 ? 'Frontal' : 'Isométrico';
+      this.viewLabel.textContent += ' ' + Math.abs(this.view3d) + '/2';
+    };
+    this.zoomLabel = h('output', { class: 'rv3d-zoom-value', 'aria-live':'polite' }, '100%');
+    const changeZoom = d => {
+      const cam = this.camera3d;
+      cam.zoom = limitar(Math.round((cam.zoom + d) * 4) / 4, 1, 2.25);
+      if(cam.zoom === 1) cam.px = cam.py = 0;
+      cam.px=limitar(cam.px,-this.palco.W*(cam.zoom-1)/2,this.palco.W*(cam.zoom-1)/2);
+      cam.py=limitar(cam.py,-this.palco.H*(cam.zoom-1)/2,this.palco.H*(cam.zoom-1)/2);
+      this.zoomLabel.textContent=Math.round(cam.zoom*100)+'%';
+      this.cv.classList.toggle('rv3d-zoomed',cam.zoom>1);
+    };
+    this.viewBar = h('div', { class: 'rv3d-toolbar' },
+      h('span', { class: 'rv3d-indicator' }, '◆ VISÃO 3D LEVE'),
+      h('span', { class: 'rv3d-toolbar-info' }, 'Mude o ângulo dos equipamentos'),
+      h('div', { class: 'rv3d-view-buttons' },
+        h('button', { type:'button', title:'Girar os equipamentos para a esquerda', 'aria-label':'Visão pela esquerda', onclick:()=>orbit(-1) }, '◀'),
+        this.viewLabel,
+        h('button', { type:'button', title:'Girar os equipamentos para a direita', 'aria-label':'Visão pela direita', onclick:()=>orbit(1) }, '▶')),
+      h('div', { class:'rv3d-zoom-buttons' },
+        h('button', { type:'button', 'aria-label':'Afastar câmera', title:'Afastar rede', onclick:()=>changeZoom(-.25) }, '−'),
+        this.zoomLabel,
+        h('button', { type:'button', 'aria-label':'Aproximar câmera', title:'Aproximar rede; depois arraste para explorar', onclick:()=>changeZoom(.25) }, '+')));
     this.elEstado = h('span', { class: 'estado' }, 'Pronto');
     this.elPasso = h('span', { class: 'passo-ind' });
     this.elPontos = h('span', { class: 'passo-pts', 'aria-hidden': 'true' });
@@ -964,7 +984,7 @@ class Lab {
     const esquerda = h('div', { class: 'col-palco' },
       h('section', { class: 'painel painel-palco' },
         h('div', { class: 'painel-cab' }, h('h3', null, h('span', { class: 'parte' }, '1'), 'Rede viva'), this.elEstado, h('span', { class: 'passo-caixa' }, this.elPontos, this.elPasso)),
-        this.elMoldura, transporte, this.elLegenda),
+        this.viewBar, this.elMoldura, transporte, this.elLegenda),
       this.elExtra);
     const direita = h('div', { class: 'col-lado' },
       h('section', { class: 'painel explica' }, h('h3', null, h('span', { class: 'parte' }, '2'), 'O que está acontecendo?'), this.elExpTit, this.elExpTxt),
@@ -976,7 +996,31 @@ class Lab {
       h('header', { class: 'lab-cab' }, h('div', { class: 'lab-tit' }, h('h2', null, a.titulo), h('p', null, a.resumo)), this.elCen),
       h('div', { class: 'lab-grade' }, esquerda, direita));
 
-    this.cv.addEventListener('click', ev => this.aoClicar(ev));
+    this.cameraPointer = null;
+    this.cameraDragged = false;
+    this.cv.addEventListener('pointerdown', e => {
+      if(this.camera3d.zoom<=1.01 || (e.pointerType==='mouse' && e.button!==0))return;
+      this.cameraPointer = { id:e.pointerId, x:e.clientX, y:e.clientY };
+      this.cameraDragged = false;
+      this.cv.setPointerCapture(e.pointerId);
+    });
+    this.cv.addEventListener('pointermove', e => {
+      if(!this.cameraPointer || this.cameraPointer.id!==e.pointerId)return;
+      const dx=e.clientX-this.cameraPointer.x,dy=e.clientY-this.cameraPointer.y;
+      if(Math.abs(dx)+Math.abs(dy)>2)this.cameraDragged=true;
+      if(!this.cameraDragged)return;
+      const cam=this.camera3d;
+      cam.px=limitar(cam.px+dx,-this.palco.W*(cam.zoom-1)/2,this.palco.W*(cam.zoom-1)/2);
+      cam.py=limitar(cam.py+dy,-this.palco.H*(cam.zoom-1)/2,this.palco.H*(cam.zoom-1)/2);
+      this.cameraPointer.x=e.clientX;this.cameraPointer.y=e.clientY;
+    });
+    const endCamera=e=>{if(this.cameraPointer&&this.cameraPointer.id===e.pointerId)this.cameraPointer=null;};
+    this.cv.addEventListener('pointerup',endCamera);
+    this.cv.addEventListener('pointercancel',endCamera);
+    this.cv.addEventListener('click', ev => {
+      if(this.cameraDragged){this.cameraDragged=false;return;}
+      this.aoClicar(ev);
+    });
     this.cv.addEventListener('mousemove', ev => this.aoMover(ev));
     this.cv.addEventListener('mouseleave', () => { if (this.cena) this.cena.sobre = null; this.cv.style.cursor = ''; });
     if (window.ResizeObserver) new ResizeObserver(() => this.palco.ajustar()).observe(this.elMoldura);
@@ -1137,7 +1181,10 @@ class Lab {
   /* ----- mouse no palco ----- */
   coord(ev) {
     const r = this.cv.getBoundingClientRect();
-    return { x: (ev.clientX - r.left) * (this.palco.W / r.width), y: (ev.clientY - r.top) * (this.palco.H / r.height) };
+    const x=(ev.clientX-r.left)*(this.palco.W/r.width),y=(ev.clientY-r.top)*(this.palco.H/r.height);
+    const cam=this.camera3d;
+    return {x:(x-this.palco.W/2-cam.px)/cam.zoom+this.palco.W/2,
+            y:(y-this.palco.H/2-cam.py)/cam.zoom+this.palco.H/2};
   }
   aoMover(ev) {
     const p = this.coord(ev), a = this.cena.achar(p.x, p.y);
@@ -1244,6 +1291,8 @@ ABAS.push({
       h('ul', { class: 'ini-nomes' }, nomes.map(n => h('li', null, n))),
       h('dl', { class: 'ini-ficha' }, ficha.map(p => [h('dt', null, p[0]), h('dd', null, p[1])])),
       CFG.creditos ? h('p', { class: 'ini-cred' }, CFG.creditos) : null);
+
+    if (window.RedesVivas3D) capa.append(window.RedesVivas3D.preview());
 
     const guia = h('section', { class: 'painel ini-guia' },
       h('h3', null, 'Como usar'),
@@ -3726,6 +3775,7 @@ ABAS.push({
     };
     desenhar();
 
+    if (window.RedesVivas3D) el.append(window.RedesVivas3D.preview());
     el.append(
       h('header', { class: 'lab-cab' }, h('div', { class: 'lab-tit' }, h('h2', null, 'Glossário e quiz'), h('p', null, 'As siglas usadas no simulador, com o significado em português. Depois, teste o que aprendeu: cada acerto na primeira tentativa vale 5 pontos.'))),
       h('div', { class: 'glos-grade' },
@@ -3832,7 +3882,7 @@ const App = {
   rotuloTema() { this.bTema.textContent = Tema.ehEscuro() ? 'Tema claro' : 'Tema escuro'; },
 
   laco(t) {
-    const fpsDelay = document.documentElement.classList.contains('fx-lite') ? 32 : 16;
+    const fpsDelay = document.documentElement.classList.contains('fx-lite') || window.innerWidth <= 760 || window.matchMedia('(prefers-reduced-motion: reduce)').matches ? 33 : 16;
     if (!document.hidden && !document.body.classList.contains('intro-active') && this.labAtivo &&
         (!this._ultimoRender || t - this._ultimoRender >= fpsDelay)) {
       this.labAtivo.quadro(t);
