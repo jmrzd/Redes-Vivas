@@ -56,6 +56,7 @@
     ctx.fillStyle = color(tint, .09); ctx.fill();
     ctx.beginPath(); ctx.arc(x, y, radius, 0, Math.PI * 2); ctx.fillStyle = tint; ctx.fill();
   }
+  // Shaded projected 3D hardware, deliberately without heavy WebGL dependencies.
   function box(x, y, z, w, h, d, tint) {
     const pts = {
       a: project(x-w/2,y,z-d/2), b: project(x+w/2,y,z-d/2),
@@ -63,9 +64,17 @@
       f: project(x-w/2,y,z+d/2), g: project(x+w/2,y,z+d/2),
       i: project(x+w/2,y+h,z+d/2), j: project(x-w/2,y+h,z+d/2)
     };
-    path([pts.e,pts.c,pts.i,pts.j], '#1c456a', color(tint,.7), 1.2);
-    path([pts.b,pts.g,pts.i,pts.c], '#102944', color(tint,.44), 1);
-    path([pts.a,pts.b,pts.c,pts.e], '#102338', color(tint,.58), 1.3);
+    const face = (vertices, top, bottom, opacity) => {
+      const xs=vertices.map(p=>p.x), ys=vertices.map(p=>p.y);
+      const grad=ctx.createLinearGradient(Math.min(...xs),Math.min(...ys),Math.max(...xs)+1,Math.max(...ys)+1);
+      grad.addColorStop(0,top);grad.addColorStop(1,bottom);
+      path(vertices,grad,color(tint,opacity),1.1);
+    };
+    if(yaw>=0) face([pts.a,pts.f,pts.j,pts.e],'#193956','#09182d',.38);
+    else face([pts.b,pts.g,pts.i,pts.c],'#183a56','#081729',.42);
+    face([pts.e,pts.c,pts.i,pts.j],'#2d5878','#0c2743',.72);
+    face([pts.a,pts.b,pts.c,pts.e],'#19334e','#071525',.65);
+    line(pts.e,pts.c,color(tint,.76),1.6);
     return pts;
   }
   function floor(node, position) {
@@ -81,7 +90,7 @@
     box(n.x,n.y,n.z, .55,.95,.46, n.tint);
     const c = project(n.x, n.y+.46, n.z-.244), s = c.s;
     for (let i = -1; i <= 1; i++) {
-      ctx.fillStyle = i === -1 ? '#233858' : '#10263d';
+      ctx.fillStyle = i === -1 ? '#30465e' : '#0b1e33';
       ctx.fillRect(c.x - s*.20, c.y+i*s*.22 - s*.045, s*.4, s*.08);
       glowDot(c.x - s*.14, c.y+i*s*.22 - s*.005, i===1?'#ff9944':'#31e59c', s*.017);
       line({x:c.x+s*.015, y:c.y+i*s*.22},{x:c.x+s*.15,y:c.y+i*s*.22},color(n.tint,.7),1.7);
@@ -91,7 +100,7 @@
     box(n.x,n.y,n.z, .95,.075,.67,n.tint);
     box(n.x,n.y+.34,n.z+.23, .81,.62,.09,n.tint);
     const c=project(n.x,n.y+.34,n.z+.17), s=c.s;
-    ctx.fillStyle='#071b33'; ctx.fillRect(c.x-s*.31,c.y-s*.24,s*.62,s*.43);
+    const screen=ctx.createLinearGradient(c.x-s*.3,c.y-s*.2,c.x+s*.3,c.y+s*.2);screen.addColorStop(0,'#164f77');screen.addColorStop(.48,'#071b33');screen.addColorStop(1,'#030b19');ctx.fillStyle=screen; ctx.fillRect(c.x-s*.31,c.y-s*.24,s*.62,s*.43);
     ctx.strokeStyle=color(n.tint,.7);ctx.lineWidth=1.2;ctx.strokeRect(c.x-s*.31,c.y-s*.24,s*.62,s*.43);
     line({x:c.x-s*.23,y:c.y+s*.03},{x:c.x+s*.19,y:c.y-s*.13}, color(n.tint,.85),2);
   }
@@ -111,6 +120,8 @@
     const l=project(n.x-.22,n.y+.4,n.z+.15),r=project(n.x+.22,n.y+.4,n.z+.15);
     const lt=project(n.x-.22,n.y+.8,n.z+.15),rt=project(n.x+.22,n.y+.8,n.z+.15);
     line(l,lt,color(n.tint,.78),2);line(r,rt,color(n.tint,.78),2);
+    glowDot(lt.x,lt.y,'#5ad7ff',Math.max(1.2,s*.009));
+    glowDot(rt.x,rt.y,'#5ad7ff',Math.max(1.2,s*.009));
   }
   function renderNode(n) {
     const p = project(n.x,n.y,n.z);

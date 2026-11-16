@@ -10,8 +10,6 @@
 
 </div>
 
-[**Acessar repositório**](https://github.com/jmrzd/Redes-Vivas) · [**Abrir simulador (GitHub Pages, após ativação)**](https://jmrzd.github.io/Redes-Vivas/)
-
 ## Prévia
 
 ![Abertura interativa do Redes Vivas](assets/preview-intro.webp)
@@ -22,7 +20,7 @@
 
 **Redes Vivas** é um simulador educacional de **Introdução à Rede de Computadores**, criado para facilitar a compreensão de protocolos, equipamentos, tráfego, segurança e desempenho. O usuário pode acompanhar pacotes passando pela rede, alterar parâmetros, avançar os eventos passo a passo e resolver desafios.
 
-A experiência visual utiliza uma **abertura 3D projetada em Canvas 2D**: equipamentos com faces, perspectiva, movimento de câmera e conexões animadas. O laboratório conserva as simulações originais e apresenta equipamentos com aparência tridimensional estilizada. **Não utiliza WebGL nem modelos 3D pesados**, para funcionar em computadores e celulares mais modestos.
+A experiência visual utiliza uma **abertura 3D projetada em Canvas 2D**: equipamentos com faces sombreadas, iluminação estilizada, perspectiva, movimento de câmera e conexões animadas. O laboratório conserva as simulações originais e apresenta equipamentos com aparência tridimensional estilizada. **Não utiliza WebGL nem modelos 3D pesados**, para funcionar em computadores e celulares mais modestos.
 
 > **Importante:** as redes, endereços e comandos do projeto são **simulados** para fins didáticos. A aplicação não envia pacotes reais, não consulta servidores DNS reais e não executa varreduras externas.
 
@@ -43,6 +41,10 @@ A experiência visual utiliza uma **abertura 3D projetada em Canvas 2D**: equipa
 | 11 | Tendências | Computação em nuvem, IoT e SDN. |
 | 12 | Glossário e quiz | Conceitos, siglas e questões de revisão. |
 
+## Visual 3D leve
+
+Os equipamentos (PC, switch, roteador e servidores) têm **volume projetado e faces com iluminação**, com portas, LEDs, telas e antenas. Arraste a cena para mudar o ângulo. Tudo roda em **Canvas 2D**, sem Three.js nem modelos externos, preservando desempenho em celulares. Não são malhas WebGL reais.
+
 ## Principais recursos
 
 - **Introdução interativa:** rede com projeção 3D, animações de pacotes, movimentação do ângulo e inspeção dos equipamentos.
@@ -62,11 +64,11 @@ A experiência visual utiliza uma **abertura 3D projetada em Canvas 2D**: equipa
 Não é necessário instalar Node.js, Python nem baixar bibliotecas. Se preferir trabalhar com o VS Code, use **Live Server**.
 
 ```bash
-git clone https://github.com/jmrzd/Redes-Vivas.git
+git clone https://github.com/SEU-USUARIO/Redes-Vivas.git
 cd Redes-Vivas
 ```
 
-
+> Substitua `SEU-USUARIO` pelo nome real do seu perfil no GitHub.
 
 ## Controles
 
@@ -110,11 +112,11 @@ Edite **`js/config.js`** para preencher instituição, turma, professor e integr
 2. Acesse **Settings → Pages** no repositório.
 3. Em *Build and deployment*, selecione **Deploy from a branch**.
 4. Selecione `main`, pasta `/ (root)` e clique em **Save**.
-5. Após a publicação, o endereço costuma seguir o formato `https://jmrzd.github.io/Redes-Vivas/`.
+5. Após a publicação, o endereço costuma seguir o formato `https://SEU-USUARIO.github.io/Redes-Vivas/`.
 
 ## Créditos
 
-Trabalho acadêmico de **Introdução à Rede de Computadores** — **Afya**. O código original informa ter sido gerado com apoio de **Claude** e revisado pelo grupo. Esta versão foi reorganizada e recebeu uma camada visual e interativa adicional com apoio do **ChatGPT**. Antes da apresentação, preencha os nomes dos participantes em `js/config.js`.
+Trabalho acadêmico de **Introdução à Rede de Computadores** — **Afya**. O código original informa ter sido gerado com apoio de **Claude** e revisado pelo grupo. Esta versão foi reorganizada e recebeu uma camada visual e interativa adicional com apoio do **ChatGPT**. Preencha os nomes dos participantes em `js/config.js` antes da entrega.
 
 ---
 
