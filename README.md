@@ -4,7 +4,7 @@
 
 ### O universo vivo das redes de computadores
 
-**12 módulos preservados • Simulações interativas • Explorador 3D com câmera orbital • Compatível com celular**
+**12 módulos preservados • 3D direto nos laboratórios • Simulações interativas • Compatível com celular**
 
 🎮 **[Abrir a demonstração ao vivo](https://redes-vivas.vercel.app/)** · 💻 [Código-fonte](https://github.com/jmrzd/Redes-Vivas)
 
@@ -22,7 +22,7 @@
 
 ![Laboratório 3D responsivo para celular com zoom e controles de toque](assets/preview-mobile.webp)
 
-**Nova visão imersiva — renderização geométrica em Canvas 2D:**
+**Explorador opcional em tela cheia — renderização em Canvas 2D:**
 
 ![Explorador 3D em tela cheia com os equipamentos da simulação de página web](assets/preview-studio-desktop.webp)
 
@@ -75,18 +75,19 @@ A abertura agora utiliza uma **placa de circuitos em perspectiva**, com:
 - Arte de equipamentos pré-renderizada com cache (sem criar gradientes de novo a cada quadro); taxas de quadros reduzidas no celular, DPI limitado e **Modo leve** opcional.
 - Layout mobile com 12 abas roláveis horizontalmente, botões maiores, palco alto e painéis empilhados; respeita preferências do sistema para redução de movimento.
 
-## Explorador 3D cinematográfico — atualização
+## Visualização 3D padrão, sem janela separada
 
-Cada um dos **10 módulos com laboratório** ganhou o botão **◈ Explorar cena 3D**, que abre uma visualização em tela cheia, semelhante à apresentação inicial. A visualização usa **os nós, cabos, estados e pacotes já existentes na simulação** — não executa tráfego real nem modifica os resultados educativos. Os outros dois módulos, **Início e Glossário/quiz**, mantêm a mini-rede 3D e o acesso à demonstração. A aba Camadas, cujo diagrama original não possui equipamentos físicos, usa uma cena 3D **explicitamente ilustrativa**.
+Nos **10 módulos com laboratórios**, a **Cena 3D** é exibida no palco por padrão, com equipamentos e conexões projetados em perspectiva. Os controles originais — iniciar, pausar, próximo passo, reiniciar, Experimente, Inspetor e registro — continuam ao lado da cena e usam a mesma lógica.
 
-- **Hardware tridimensional projetado:** servidor em rack, notebook com teclado, switch com portas Ethernet, roteador com antenas, firewall, nuvem, Wi-Fi e dispositivos IoT, desenhados em faces geométricas. Não há modelos importados, WebGL ou Three.js.
-- **Câmera suave:** arraste para girar e alterar a inclinação; use os botões ou a roda do mouse para aproximar. Quando inativa, a cena faz uma leve órbita, desativada no modo leve e para quem prefere reduzir movimento.
-- **Estados sincronizados:** LEDs, equipamentos desligados, enlaces cortados e pacotes em movimento refletem os estados do cenário original. Toque em um equipamento para identificá-lo e abrir seus dados no Inspetor.
-- **Layout vertical inteligente:** em celulares, os equipamentos se distribuem em várias linhas para aproveitar a altura, sem encolher a rede inteira em uma única fileira.
-- **Economia de recursos:** a simulação continua executando, mas o Canvas do laboratório escondido deixa de ser redesenhado enquanto o explorador está aberto. O explorador só anima quando visível, limita a resolução de renderização e reduz a taxa de quadros em dispositivos móveis.
-- **Qualidade adaptativa:** modo leve manual, ativação inicial em dispositivos de recursos muito limitados, e redução automática de efeitos se o desenho ficar excessivamente demorado.
+- **◈ Cena 3D:** perspectiva isométrica, dispositivos com volume, câmera orbital por arrasto, zoom, pacotes e estados reais da simulação.
+- **▤ Diagrama:** restaura a representação educativa clássica, com recursos específicos e áreas clicáveis de cada tópico. Os modos compartilham o estado do experimento.
+- **Camadas OSI/TCP-IP:** o diagrama obrigatório de encapsulamento foi preservado e convertido em blocos 3D extrudados e selecionáveis, tanto para OSI quanto para TCP/IP.
+- **◈ Explorar cena 3D:** permanece disponível como opção de tela cheia, mas não é necessário para visualizar o laboratório 3D.
+- **Interação na cena:** clique ou toque para inspecionar equipamentos; cabos podem ser desligados e religados na visão 3D quando o cenário permitir.
+- **Mobile:** dispositivos distribuídos em linhas, enquadramento próprio e controles de toque. O detalhe do equipamento aparece somente após a seleção, preservando o espaço.
+- **Economia de desempenho:** apenas a cena visível é renderizada, com Canvas 2D, limite de resolução, taxa de quadros menor em celulares e modo leve.
 
-**Importante:** os volumes são gerados por projeção 3D em **Canvas 2D**. Não é uma câmera WebGL com modelos 3D importados. O objetivo é reproduzir a aparência cinematográfica da abertura, mantendo a aplicação pequena e leve.
+A aparência é **3D projetado em Canvas 2D**, não malhas WebGL. Isso evita dependências externas e preserva a leveza do site.
 
 ## Principais recursos
 
@@ -128,7 +129,8 @@ cd Redes-Vivas
 | `+` / `-` | Ajusta a velocidade. |
 | **Modo leve** | Reduz efeitos para equipamentos de menor desempenho. |
 | **◀ / ▶** | Altera o ângulo aparente dos equipamentos em cada laboratório 3D. |
-| **◈ Explorar cena 3D** | Abre a visualização imersiva do cenário atual, com os pacotes sincronizados. |
+| **◈ Cena 3D / ▤ Diagrama** | Alterna a cena 3D padrão e o diagrama técnico sem reiniciar a simulação. |
+| **◈ Explorar cena 3D** | Abre a opção em tela cheia, com os pacotes sincronizados. |
 | **Arrastar no explorador** | Orbita a câmera 3D e ajusta sua inclinação. |
 | **Esc** no explorador | Fecha o explorador e volta ao laboratório sem reiniciar o cenário. |
 | **− / +** | Afasta ou aproxima a rede (até 225%). Quando ampliada, arraste para navegar. |

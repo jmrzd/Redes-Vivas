@@ -22,10 +22,27 @@
     </div><footer class="rvstudio-footer"><span>CANVAS 2D · CENA 3D PROJETADA · SEM BIBLIOTECAS</span><span>O TRÁFEGO ACOMPANHA A SIMULAÇÃO ORIGINAL</span></footer>
   </section>`;
   document.body.append(modal);
-  const $=s=>modal.querySelector(s),cv=$('#rvstudio-canvas'),ctx=cv.getContext('2d',{alpha:false});
-  const ui={name:$('#rvstudio-module'),state:$('#rvstudio-state'),packets:$('#rvstudio-packets'),device:$('#rvstudio-device'),zoom:$('#rvstudio-zoom'),lite:$('#rvstudio-lite')};
+  const $=s=>modal.querySelector(s),modalCanvas=$('#rvstudio-canvas');
+  const modalUi={name:$('#rvstudio-module'),state:$('#rvstudio-state'),packets:$('#rvstudio-packets'),device:$('#rvstudio-device'),zoom:$('#rvstudio-zoom'),lite:$('#rvstudio-lite')};
+  // One reusable inline canvas shared between laboratories: no second 3D engine.
+  const inline=document.createElement('div');inline.className='rvstudio-inline';inline.hidden=true;
+  inline.innerHTML=`<canvas class="rvstudio-inline-canvas" aria-label="Laboratório 3D interativo, arraste para girar e toque em equipamentos" tabindex="0"></canvas>
+    <div class="rvstudio-inline-head"><strong>REDE VIVA <em>3D</em></strong><span>ARRASTE PARA GIRAR · TOQUE NOS EQUIPAMENTOS</span></div>
+    <div class="rvstudio-inline-state"><span class="rvstudio-light"></span><span id="rvstudio-inline-state">PRONTO</span><span id="rvstudio-inline-packets">0 PACOTES</span></div>
+    <div class="rvstudio-inline-device" aria-live="polite"><b>EXPLORADOR DE REDE</b><span>Clique em um equipamento para inspecionar.</span></div>
+    <div class="rvstudio-inline-controls">
+      <button type="button" data-camera="left" aria-label="Girar à esquerda">◀</button>
+      <button type="button" data-camera="reset" aria-label="Centralizar">Centralizar</button>
+      <button type="button" data-camera="right" aria-label="Girar à direita">▶</button>
+      <button type="button" data-camera="out" aria-label="Afastar">−</button>
+      <output id="rvstudio-inline-zoom">100%</output>
+      <button type="button" data-camera="in" aria-label="Aproximar">+</button>
+    </div>`;
+  const inlineCanvas=inline.querySelector('canvas');
+  const inlineUi={name:inline.querySelector('.rvstudio-inline-head strong'),state:inline.querySelector('#rvstudio-inline-state'),packets:inline.querySelector('#rvstudio-inline-packets'),device:inline.querySelector('.rvstudio-inline-device'),zoom:inline.querySelector('#rvstudio-inline-zoom'),lite:modalUi.lite};
+  let cv=modalCanvas,ctx=cv.getContext('2d',{alpha:false}),ui=modalUi,inlineMode=false,inlineLab=null;
   let lab=null,raf=0,last=0,W=0,H=0,ratio=1,scale=65,cam={yaw:.54,target:.54,pitch:.55,zoom:1,centerX:0,centerZ:0},
-      pointer=null,drag=false,chosen=null,hotspots=[],previousFocus=null,lastTouch=0,
+      pointer=null,drag=false,chosen=null,hotspots=[],cableHits=[],previousFocus=null,lastTouch=0,
       perf={samples:0,elapsed:0,frameMs:0,drawMs:0,avgDrawMs:0,actualFps:0,autoLite:false};
   const mobile=()=>W<650;
   // Educational 3D vignette for Camadas OSI/TCP-IP: its teaching canvas has no device nodes.
@@ -48,7 +65,8 @@
     if(mobile()&&lab){
       // Portrait storyboard: uses the canvas height instead of crushing 5-12 nodes into one line.
       const ns=sceneNodes(),i=ns.indexOf(n);
-      if(i>=0){const rows=Math.ceil(ns.length/2);return {x:(i%2===0?-1.55:1.55),z:(Math.floor(i/2)-(rows-1)/2)*4.2};}
+      if(i>=0){const cols=ns.length>7?3:2,rows=Math.ceil(ns.length/cols);
+        return {x:((i%cols)-(cols-1)/2)*(cols===3?2.25:2.9),z:(Math.floor(i/cols)-(rows-1)/2)*3.35};}
     }
     const px=(Number.isFinite(n.fx)?n.fx:.5),py=(Number.isFinite(n.fy)?n.fy:.5);
     return {x:(px-.5)*7-(py-.5)*1.4,z:(py-.5)*4};
@@ -217,7 +235,7 @@
     }
   }
   function cables(){
-    const map=lab.cena.nos;
+    const map=lab.cena.nos;cableHits=[];
     if(!realNodes().length){
       for(let i=0;i<illustrative.length-1;i++){
         const a=pos(illustrative[i]),b=pos(illustrative[i+1]);
@@ -229,6 +247,7 @@
     for(const c of lab.cena.cabos){
       const A=map.get(c.a),B=map.get(c.b);if(!A||!B||A.oculto||B.oculto)continue;
       const a=pos(A),b=pos(B),cut=c.cortado&&!c.disfarce;
+      cableHits.push({c,a:proj(a.x,.035,a.z),b:proj(b.x,.035,b.z)});
       edge([a.x,.035,a.z],[b.x,.035,b.z],cut?'rgba(255,80,104,.37)':'rgba(19,166,226,.16)',7);
       if(cut){
         const mid=[(a.x+b.x)/2,(a.z+b.z)/2];
@@ -255,7 +274,7 @@
     }
   }
   function render(now){
-    if(modal.hidden||!lab){raf=0;return;}
+    if((modal.hidden&&!inlineMode)||!lab){raf=0;return;}
     raf=requestAnimationFrame(render);
     if(document.hidden)return;
     const delay=lite()?50:mobile()?34:17;
@@ -294,18 +313,22 @@
     }
   }
   function select(n){chosen=n;
-    if(!n){ui.device.innerHTML='<b>EXPLORADOR DE REDE</b><span>Selecione um equipamento para ver detalhes.</span>';return;}
+    if(!n){ui.device.classList.remove('is-selected');ui.device.innerHTML='<b>EXPLORADOR DE REDE</b><span>Selecione um equipamento para ver detalhes.</span>';return;}
+    ui.device.classList.add('is-selected');
     ui.device.replaceChildren();
     const title=document.createElement('b'),detail=document.createElement('span');
     title.textContent=(n.rotulo||n.tipo).toUpperCase();
     detail.textContent=`${n.tipo.toUpperCase()}${n.sub?' · '+n.sub:''}${n.desligado?' · DESLIGADO':''}`;
     ui.device.append(title,detail);
     // Keep the original inspector working and reflect the same selected node.
+    if(!n.illustrative&&n.clicavel&&lab.def.aoClicarNo&&lab.def.aoClicarNo(lab.cena,n,lab)!==false)return;
     const pairs=n.info?Object.entries(typeof n.info==='function'?n.info(lab.cena):n.info):n.sub?[['Endereço',n.sub]]:[];
     lab.inspecionar(n.rotulo||'Equipamento',pairs,{sub:n.illustrative?'diagrama ilustrativo · vista 3D':'equipamento · vista 3D'});
   }
   function open(l){
     if(!l||!l.cena)return;
+    if(inlineMode){inline.hidden=true;inlineMode=false;}
+    cv=modalCanvas;ctx=cv.getContext('2d',{alpha:false});ui=modalUi;
     previousFocus=document.activeElement;lab=l;chosen=null;
     ui.name.textContent=(l.aba?.titulo||l.def?.titulo||'Laboratório interativo')+(realNodes().length?'':' · representação ilustrativa');
     modal.hidden=false;document.body.classList.add('rvstudio-active');
@@ -315,32 +338,72 @@
     select(null);last=0;lastTouch=performance.now();sizing();if(!raf)raf=requestAnimationFrame(render);
     $('#rvstudio-close').focus();
   }
-  function close(){modal.hidden=true;document.body.classList.remove('rvstudio-active');lab=null;
-    if(raf){cancelAnimationFrame(raf);raf=0;}if(previousFocus?.focus)previousFocus.focus();
+  function close(){
+    modal.hidden=true;document.body.classList.remove('rvstudio-active');lab=null;
+    if(raf){cancelAnimationFrame(raf);raf=0;}
+    if(inlineLab?.mode3d)showInline(inlineLab);
+    if(previousFocus?.focus)previousFocus.focus();
+  }
+  function showInline(l){
+    // Called when a tab or the 3D / diagram toggle changes.
+    if(!modal.hidden){inlineLab=l;return;}
+    if(inline.parentElement){inline.parentElement.classList.remove('rv3d-immersive');}
+    inline.hidden=true;inlineMode=false;inlineLab=null;
+    if(raf){cancelAnimationFrame(raf);raf=0;}
+    lab=null;
+    if(!l||!l.cena||!l.elMoldura)return;
+    inlineLab=l;lab=l;
+    l.elMoldura.append(inline);l.elMoldura.classList.add('rv3d-immersive');
+    inline.hidden=false;inlineMode=true;
+    cv=inlineCanvas;ctx=cv.getContext('2d',{alpha:false});ui=inlineUi;
+    const first=!l._rv3dVisited;
+    if(first){cam={yaw:mobile()?.08:.54,target:mobile()?.08:.54,pitch:.55,zoom:1,centerX:0,centerZ:0};l._rv3dVisited=true;}
+    ui.zoom.textContent=Math.round(cam.zoom*100)+'%';
+    chosen=null;select(null);last=0;lastTouch=performance.now();
+    perf={samples:0,elapsed:0,frameMs:0,drawMs:0,avgDrawMs:0,actualFps:0,autoLite:false};
+    sizing();raf=requestAnimationFrame(render);
   }
   $('#rvstudio-close').addEventListener('click',close);
   $('#rvstudio-left').addEventListener('click',()=>{lastTouch=performance.now();cam.target=clamp(cam.target-.27,-1.25,1.25)});
   $('#rvstudio-right').addEventListener('click',()=>{lastTouch=performance.now();cam.target=clamp(cam.target+.27,-1.25,1.25)});
   $('#rvstudio-reset').addEventListener('click',()=>{lastTouch=performance.now();cam.target=mobile()?.08:.54;cam.zoom=1;ui.zoom.textContent='100%'});
   const zoom=d=>{lastTouch=performance.now();cam.zoom=clamp(Math.round((cam.zoom+d)*10)/10,.7,2.25);ui.zoom.textContent=Math.round(cam.zoom*100)+'%'};
+  inline.querySelectorAll('[data-camera]').forEach(button=>button.addEventListener('click',()=>{
+    const op=button.dataset.camera;lastTouch=performance.now();
+    if(op==='left')cam.target=clamp(cam.target-.27,-1.25,1.25);
+    if(op==='right')cam.target=clamp(cam.target+.27,-1.25,1.25);
+    if(op==='reset'){cam.target=.54;cam.zoom=1;ui.zoom.textContent='100%';}
+    if(op==='in')zoom(.2);if(op==='out')zoom(-.2);
+  }));
   $('#rvstudio-in').addEventListener('click',()=>zoom(.2));
   $('#rvstudio-out').addEventListener('click',()=>zoom(-.2));
   ui.lite.addEventListener('click',()=>{document.documentElement.classList.toggle('fx-lite');ui.lite.setAttribute('aria-pressed',String(lite()));document.documentElement.dispatchEvent(new Event('rvqualitychange'));});
-  cv.addEventListener('wheel',ev=>{ev.preventDefault();zoom(ev.deltaY>0?-.1:.1)},{passive:false});
-  cv.addEventListener('pointerdown',ev=>{lastTouch=performance.now();pointer={id:ev.pointerId,x:ev.clientX,y:ev.clientY,mx:ev.clientX,my:ev.clientY};drag=false;cv.setPointerCapture(ev.pointerId)});
-  cv.addEventListener('pointermove',ev=>{if(!pointer||pointer.id!==ev.pointerId)return;
+  function bindCanvasEvents(surface){
+  surface.addEventListener('wheel',ev=>{ev.preventDefault();zoom(ev.deltaY>0?-.1:.1)},{passive:false});
+  surface.addEventListener('pointerdown',ev=>{lastTouch=performance.now();pointer={id:ev.pointerId,x:ev.clientX,y:ev.clientY,mx:ev.clientX,my:ev.clientY};drag=false;surface.setPointerCapture(ev.pointerId)});
+  surface.addEventListener('pointermove',ev=>{if(!pointer||pointer.id!==ev.pointerId)return;
     const dx=ev.clientX-pointer.x,dy=ev.clientY-pointer.y;
     if(Math.abs(ev.clientX-pointer.mx)+Math.abs(ev.clientY-pointer.my)>8)drag=true;
     if(drag){lastTouch=performance.now();cam.target=clamp(cam.target+dx*.008,-1.25,1.25);cam.pitch=clamp(cam.pitch+dy*.003,.30,.72);}
     pointer.x=ev.clientX;pointer.y=ev.clientY;
   });
-  cv.addEventListener('pointerup',ev=>{if(!pointer||pointer.id!==ev.pointerId)return;
+  surface.addEventListener('pointerup',ev=>{if(!pointer||pointer.id!==ev.pointerId)return;
     if(!drag){const rect=cv.getBoundingClientRect(),x=ev.clientX-rect.left,y=ev.clientY-rect.top;
       const hit=hotspots.map(h=>({...h,d:Math.hypot(h.x-x,h.y-y)})).sort((a,b)=>a.d-b.d)[0];
-      if(hit&&hit.d<hit.rad*1.6)select(hit.n);
+      // Click/tap the actual simulated cable to disconnect/reconnect it.
+      const wires=cableHits.map(item=>{
+        const ax=item.a.x,ay=item.a.y,bx=item.b.x,by=item.b.y,dx=bx-ax,dy=by-ay;
+        const k=clamp(((x-ax)*dx+(y-ay)*dy)/(dx*dx+dy*dy||1),0,1);
+        return {...item,d:Math.hypot(x-(ax+dx*k),y-(ay+dy*k)),k};
+      }).filter(item=>item.k>.1&&item.k<.9).sort((a,b)=>a.d-b.d)[0];
+      if(hit&&hit.d<Math.min(hit.rad*.85,42))select(hit.n);
+      else if(wires&&wires.d<12){lab.alternarCabo(wires.c);select(null);}
+      else if(hit&&hit.d<hit.rad*1.6)select(hit.n);
     }pointer=null;
   });
-  cv.addEventListener('pointercancel',()=>{pointer=null});
+  surface.addEventListener('pointercancel',()=>{pointer=null});
+  }
+  bindCanvasEvents(modalCanvas);bindCanvasEvents(inlineCanvas);
   modal.addEventListener('keydown',ev=>{
     if(ev.key==='Escape'){ev.preventDefault();close();}
     if(ev.key==='ArrowLeft'){lastTouch=performance.now();cam.target=clamp(cam.target-.23,-1.25,1.25);}
@@ -348,5 +411,5 @@
   });
   // Prevent keyboard shortcuts of the underlying simulator from running while the modal is open.
   modal.addEventListener('keydown',ev=>{if(ev.key===' '||ev.key==='PageUp'||ev.key==='PageDown'||ev.key==='r'||ev.key==='R')ev.stopPropagation()});
-  window.RedesVivasStudio={open,close,isOpen:()=>!modal.hidden,stats:()=>({fps:Math.round(perf.actualFps),avgDrawMs:+perf.avgDrawMs.toFixed(2),lastDrawMs:+perf.drawMs.toFixed(2),lite:lite(),nodes:lab?sceneNodes().length:0})};
+  window.RedesVivasStudio={open,close,showInline,isOpen:()=>!modal.hidden,shouldSkip:l=>!modal.hidden||(inlineMode&&l===inlineLab),stats:()=>({fps:Math.round(perf.actualFps),avgDrawMs:+perf.avgDrawMs.toFixed(2),lastDrawMs:+perf.drawMs.toFixed(2),lite:lite(),nodes:lab?sceneNodes().length:0})};
 })();

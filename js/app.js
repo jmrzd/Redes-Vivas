@@ -952,8 +952,18 @@ class Lab {
       this.zoomLabel.textContent=Math.round(cam.zoom*100)+'%';
       this.cv.classList.toggle('rv3d-zoomed',cam.zoom>1);
     };
+    this.mode3d = this.aba.id !== 'camadas'; // Camadas uses its own interactive isometric 3D stacks.
+    const useView = mode => {
+      this.mode3d = mode;
+      this.bVisao3d.setAttribute('aria-pressed',String(mode));
+      this.bVisaoMapa.setAttribute('aria-pressed',String(!mode));
+      window.RedesVivasStudio?.showInline(mode ? this : null);
+    };
+    this.bVisao3d = h('button',{type:'button',class:'rv3d-mode', 'aria-pressed':String(this.mode3d),title:'Mostrar o laboratório 3D diretamente no palco',onclick:()=>useView(true)},'◈ Cena 3D');
+    this.bVisaoMapa = h('button',{type:'button',class:'rv3d-mode','aria-pressed':String(!this.mode3d),title:'Mostrar diagrama didático com todos os detalhes e áreas clicáveis',onclick:()=>useView(false)},'▤ Diagrama');
     this.viewBar = h('div', { class: 'rv3d-toolbar' },
-      h('span', { class: 'rv3d-indicator' }, '◆ VISÃO 3D LEVE'),
+      h('span', { class: 'rv3d-indicator' }, this.aba.id === 'camadas' ? '◆ CAMADAS 3D' : '◆ LABORATÓRIO 3D'),
+      this.bVisao3d,this.bVisaoMapa,
       h('button', {type:'button',class:'rv3d-open-studio',title:'Abrir esta simulação em uma cena 3D interativa',onclick:()=>window.RedesVivasStudio?.open(this)},'◈ Explorar cena 3D'),
       h('span', { class: 'rv3d-toolbar-info' }, 'Mude o ângulo dos equipamentos'),
       h('div', { class: 'rv3d-view-buttons' },
@@ -1443,6 +1453,34 @@ function camGeo(s) {
   };
 }
 
+// Raised isometric blocks for OSI / TCP-IP: 2.5D faces drawn in Canvas.
+// Interaction areas still use the original flat coordinates for reliable taps.
+function camPrisma(c,x,y,w,h,cor,on,sel,accent){
+  const dep=Math.min(9,Math.max(4,h*.19));
+  const side=Math.min(10,Math.max(5,w*.055));
+  c.save();
+  const dark=Tema.cor('--stage');
+  const face=c.createLinearGradient(x,y,x+w,y+h);
+  face.addColorStop(0,on?'#164362':'#12283e');
+  face.addColorStop(.55,on?'#102e4d':'#0b1c31');
+  face.addColorStop(1,'#071525');
+  // Top illuminated facet.
+  c.beginPath();c.moveTo(x,y);c.lineTo(x+side,y-dep);c.lineTo(x+w+side,y-dep);
+  c.lineTo(x+w,y);c.closePath();c.fillStyle=on?cor:'#214c67';c.globalAlpha=on?.56:.48;c.fill();
+  c.globalAlpha=1;c.strokeStyle=on?cor:'#356c86';c.lineWidth=.95;c.stroke();
+  // Right recessed side.
+  c.beginPath();c.moveTo(x+w,y);c.lineTo(x+w+side,y-dep);c.lineTo(x+w+side,y+h-dep);
+  c.lineTo(x+w,y+h);c.closePath();c.fillStyle='#051527';c.fill();
+  c.strokeStyle=on?cor:'#32647e';c.stroke();
+  c.fillStyle=face;rr(c,x,y,w,h,5);c.fill();
+  c.strokeStyle=on?cor:(sel?accent:'#34708b');c.lineWidth=on||sel?2.2:1.05;
+  rr(c,x,y,w,h,5);c.stroke();
+  c.beginPath();c.moveTo(x+5,y+1.6);c.lineTo(x+w-4,y+1.6);
+  c.strokeStyle=on?cor:'#46829c';c.globalAlpha=.57;c.lineWidth=1;c.stroke();
+  c.globalAlpha=.1;c.fillStyle=cor;rr(c,x+1,y+1,w-2,h-2,4);c.fill();
+  c.restore();
+}
+
 function camPilha(c, s, g, B, lado) {
   const E = s.E, F = s.F, osiW = B.w * .58, tx = B.x + osiW + 4, tw = B.w - osiW - 4;
   const ativa = lado === 'o' ? E.ativaO : E.ativaD, fs = g.rh < 30 ? 10.5 : 12;
@@ -1455,10 +1493,7 @@ function camPilha(c, s, g, B, lado) {
   for (let i = 0; i < 7; i++) {
     const L = CAMADAS[i], y = g.topo + g.rh * i + 1.5, hh = g.rh - 3, cor = Tema.cor(TIPOS[L.cor]);
     const on = ativa === i, sel = E.sel === i;
-    c.fillStyle = Tema.cor('--node'); rr(c, B.x, y, osiW, hh, 7); c.fill();
-    if (on) { c.globalAlpha = .26; c.fillStyle = cor; rr(c, B.x, y, osiW, hh, 7); c.fill(); c.globalAlpha = 1; }
-    c.strokeStyle = on ? cor : Tema.cor(sel ? '--accent' : '--node-line'); c.lineWidth = on || sel ? 2 : 1;
-    rr(c, B.x, y, osiW, hh, 7); c.stroke();
+    camPrisma(c,B.x,y,osiW,hh,cor,on,sel,Tema.cor('--accent'));
     c.fillStyle = cor; rr(c, B.x + 4, y + 4, 4, hh - 8, 2); c.fill();
     c.fillStyle = Tema.cor('--ink'); c.textBaseline = 'middle'; c.textAlign = 'left';
     c.font = '700 ' + fs + 'px ' + F.mono; c.fillText(String(L.n), B.x + 14, y + hh / 2 + .5);
@@ -1468,10 +1503,7 @@ function camPilha(c, s, g, B, lado) {
   PILHA_TCPIP.forEach((T, j) => {
     const y = g.topo + g.rh * T.de + 1.5, hh = g.rh * (T.ate - T.de + 1) - 3, cor = Tema.cor(TIPOS[T.cor]);
     const on = ativa >= T.de && ativa <= T.ate, sel = E.selT === j;
-    c.fillStyle = Tema.cor('--node'); rr(c, tx, y, tw, hh, 7); c.fill();
-    if (on) { c.globalAlpha = .26; c.fillStyle = cor; rr(c, tx, y, tw, hh, 7); c.fill(); c.globalAlpha = 1; }
-    c.strokeStyle = on ? cor : Tema.cor(sel ? '--accent' : '--node-line'); c.lineWidth = on || sel ? 2 : 1;
-    rr(c, tx, y, tw, hh, 7); c.stroke();
+    camPrisma(c,tx,y,tw,hh,cor,on,sel,Tema.cor('--accent'));
     c.fillStyle = Tema.cor('--ink'); c.textAlign = 'center'; c.textBaseline = 'middle';
     c.font = '600 ' + (fs - .5) + 'px ' + F.corpo;
     const corte = T.nome.indexOf(' ');
@@ -1499,7 +1531,10 @@ function camBarra(c, s, g, k, bits, alfa, alin, x, y) {
       const kk = k[id];
       if (kk <= .01) continue;
       const w = CAM_PECAS[id][2] * f * kk, cor = Tema.cor(TIPOS[CAM_PECAS[id][1]]);
-      c.fillStyle = cor; rr(c, xx + .75, y - hh / 2, Math.max(1, w - 1.5), hh, 5); c.fill();
+      const bx=xx+.75,by=y-hh/2,bw=Math.max(1,w-1.5);
+      c.fillStyle=cor; rr(c,bx,by,bw,hh,4);c.fill();
+      c.fillStyle='rgba(255,255,255,.36)'; c.beginPath();c.moveTo(bx+3,by+1);c.lineTo(bx+Math.max(4,bw-3),by+1);c.lineTo(bx+Math.max(4,bw-7),by-4);c.lineTo(bx+7,by-4);c.closePath();c.fill();
+      c.fillStyle='rgba(2,9,23,.35)';c.beginPath();c.moveTo(bx+bw-1,by);c.lineTo(bx+bw+4,by-4);c.lineTo(bx+bw+4,by+hh-5);c.lineTo(bx+bw-1,by+hh);c.fill();
       if (kk > .75) {
         c.fillStyle = corDeTexto(cor); c.font = '700 ' + (f < .8 ? 9.5 : 11) + 'px ' + F.corpo; c.textAlign = 'center'; c.textBaseline = 'middle';
         c.fillText(id === 'DADOS' ? camMsg(s) : CAM_PECAS[id][0], xx + w / 2, y + .5);
@@ -3852,6 +3887,7 @@ const App = {
     }
     this.atual = aba; this.labAtivo = aba.lab || null;
     if (this.labAtivo) { this.labAtivo.ultimo = 0; this.labAtivo.palco.ajustar(); }
+    window.RedesVivasStudio?.showInline(this.labAtivo?.mode3d ? this.labAtivo : null);
     if (aba.aoAbrir) aba.aoAbrir(aba);
     aba.botao.scrollIntoView({ block: 'nearest', inline: 'nearest' });
     if (!semHash) { try { history.replaceState(null, '', '#' + id); } catch (e) { /* sem histórico: segue sem endereço */ } }
@@ -3894,7 +3930,7 @@ const App = {
     const fpsDelay = document.documentElement.classList.contains('fx-lite') || window.innerWidth <= 760 || window.matchMedia('(prefers-reduced-motion: reduce)').matches ? 33 : 16;
     if (!document.hidden && !document.body.classList.contains('intro-active') && this.labAtivo &&
         (!this._ultimoRender || t - this._ultimoRender >= fpsDelay)) {
-      this.labAtivo.quadro(t, !!window.RedesVivasStudio?.isOpen());
+      this.labAtivo.quadro(t, !!window.RedesVivasStudio?.shouldSkip?.(this.labAtivo));
       this._ultimoRender = t;
     }
     requestAnimationFrame(tt => this.laco(tt));
