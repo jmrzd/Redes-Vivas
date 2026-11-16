@@ -38,6 +38,17 @@
       <output id="rvstudio-inline-zoom">100%</output>
       <button type="button" data-camera="in" aria-label="Aproximar">+</button>
     </div>`;
+  const webPreview=document.createElement('div');
+  webPreview.className='rv-web-preview';
+  webPreview.hidden=true;
+  webPreview.innerHTML=`<div class="rv-web-bar"><span class="rv-web-dots">● ● ●</span><span class="rv-web-url"></span></div>
+    <div class="rv-web-status"></div><div class="rv-web-page">
+      <div class="rv-web-part rv-web-header" data-part="1"></div>
+      <div class="rv-web-part rv-web-picture" data-part="2"></div>
+      <div class="rv-web-part rv-web-copy" data-part="3"></div>
+      <div class="rv-web-part rv-web-action" data-part="4"></div>
+    </div>`;
+  inline.append(webPreview);
   const inlineCanvas=inline.querySelector('canvas');
   const inlineUi={name:inline.querySelector('.rvstudio-inline-head strong'),state:inline.querySelector('#rvstudio-inline-state'),packets:inline.querySelector('#rvstudio-inline-packets'),device:inline.querySelector('.rvstudio-inline-device'),zoom:inline.querySelector('#rvstudio-inline-zoom'),lite:modalUi.lite};
   let cv=modalCanvas,ctx=cv.getContext('2d',{alpha:false}),ui=modalUi,inlineMode=false,inlineLab=null;
@@ -258,6 +269,89 @@
       }
     }
   }
+  // Real simulation metadata rendered directly on each of the three transmission paths.
+  function mediaLabels(){
+    if(lab.aba?.id!=='meios')return;
+    const kinds=[['cobre','PAR TRANÇADO (COBRE)','#45d6ff'],['fibra','FIBRA ÓPTICA','#ffb55e'],['wifi','WI-FI (ONDAS DE RÁDIO)','#72e9d6']];
+    for(const [id,label,color] of kinds){
+      const a=lab.cena.nos.get('tx-'+id),b=lab.cena.nos.get('rx-'+id);
+      if(!a||!b)continue;
+      const A=pos(a),B=pos(b),P=proj((A.x+B.x)/2,.19,(A.z+B.z)/2);
+      const fs=mobile()?10:12;
+      ctx.save();ctx.font=`700 ${fs}px system-ui,sans-serif`;ctx.textAlign='center';ctx.textBaseline='middle';
+      const width=Math.min(W*.72,ctx.measureText(label).width+18);
+      ctx.fillStyle='rgba(3,13,27,.93)';ctx.strokeStyle=color;ctx.lineWidth=1;
+      ctx.beginPath();ctx.roundRect(P.x-width/2,P.y-12,width,24,6);ctx.fill();ctx.stroke();
+      ctx.fillStyle='#e6faff';ctx.fillText(label,P.x,P.y,width-12);ctx.restore();
+    }
+  }
+  const layerNames=['Aplicação','Apresentação','Sessão','Transporte','Rede','Enlace','Física'];
+  const layerColors=['#34e5ac','#34d4bd','#2cc6c9','#36b6f9','#f2d064','#a891ff','#a8c9df'];
+  const layerInfo=[
+    ['Dados','HTTP, DNS e aplicações'],
+    ['Dados','Codificação, formato e criptografia'],
+    ['Dados','Gerenciamento de sessões'],
+    ['Segmento','TCP, UDP e portas'],
+    ['Pacote','IP e roteamento'],
+    ['Quadro','Ethernet, MAC e FCS'],
+    ['Bits','Sinais elétricos, ópticos ou rádio']
+  ];
+  function layers3d(){
+    hotspots=[];cableHits=[];
+    const E=lab.cena.E||lab.cena.E,active=E?.ativaO??-1;
+    const selected=Number.isInteger(E?.sel)?E.sel:-1;
+    const cw=mobile()?W*.41:Math.min(210,W*.25);
+    const gap=mobile()?8:Math.min(44,W*.09);
+    const blockH=mobile()?35:Math.min(43,H*.075);
+    const total=7*(blockH+5);
+    const left=W/2-gap/2-cw,right=W/2+gap/2;
+    const top=Math.max(mobile()?85:74,(H-total)/2);
+    ctx.save();ctx.textBaseline='middle';ctx.textAlign='center';
+    for(let side=0;side<2;side++){
+      const x=side?right:left;
+      ctx.font=`700 ${mobile()?10:12}px system-ui,sans-serif`;
+      ctx.fillStyle='#b5dfff';ctx.fillText(side?'DESTINO · DESENCAPSULAMENTO':'ORIGEM · ENCAPSULAMENTO',x+cw/2,top-25,cw+8);
+      for(let i=0;i<7;i++){
+        const y=top+i*(blockH+5),c=layerColors[i],on=(side?E?.ativaD:E?.ativaO)===i;
+        const d=mobile()?7:11;
+        ctx.fillStyle=on?'#214e67':selected===i?'#21365d':'#102840';
+        ctx.strokeStyle=on?c:'#3c7795';ctx.lineWidth=on?2:1;
+        ctx.beginPath();ctx.moveTo(x,y);ctx.lineTo(x+d,y-d);ctx.lineTo(x+cw+d,y-d);ctx.lineTo(x+cw,y);ctx.closePath();ctx.fill();ctx.stroke();
+        ctx.fillStyle='#071525';ctx.beginPath();ctx.moveTo(x+cw,y);ctx.lineTo(x+cw+d,y-d);ctx.lineTo(x+cw+d,y+blockH-d);ctx.lineTo(x+cw,y+blockH);ctx.closePath();ctx.fill();ctx.stroke();
+        ctx.fillStyle=on?'#174d54':'#10283c';ctx.fillRect(x,y,cw,blockH);ctx.strokeStyle=on?c:'#3d7492';ctx.strokeRect(x,y,cw,blockH);
+        ctx.fillStyle=c;ctx.fillRect(x+3,y+3,4,blockH-6);
+        ctx.fillStyle='#e9f8ff';ctx.font=`700 ${mobile()?10:12}px system-ui,sans-serif`;
+        ctx.fillText((7-i)+' '+layerNames[i],x+cw/2,y+blockH/2,cw-14);
+        hotspots.push({n:{rotulo:'Camada '+(7-i)+': '+layerNames[i],tipo:'camada',layer:i,illustrative:true},x:x+cw/2,y:y+blockH/2,rad:Math.max(blockH/2,cw*.42),rect:{x,y,w:cw,h:blockH}});
+      }
+    }
+    const k=Number.isInteger(active)&&active>=0?active:0;
+    const fy=top+k*(blockH+5)+blockH/2;
+    const t=lab.cena.t||0;
+    const px=W/2+Math.sin(t*.003)*gap*.22;
+    ctx.fillStyle=layerColors[k];ctx.beginPath();ctx.arc(px,fy,4.5,0,TAU);ctx.fill();
+    ctx.font=`700 ${mobile()?10:12}px system-ui,sans-serif`;ctx.fillStyle='#c6e9ff';
+    ctx.fillText(layerInfo[k][0]+' · '+layerInfo[k][1],W/2,Math.min(H-20,top+total+18),W-18);
+    ctx.restore();
+  }
+  let lastWebKey='';
+  function webBrowser(){
+    const visible=inlineMode&&lab?.aba?.id==='pagina-web';
+    webPreview.hidden=!visible;
+    if(!visible){lastWebKey='';return;}
+    const E=lab.cena.E||{};
+    const site=lab.cena.P?.site||'www.exemplo.com.br';
+    const key=[site,E.digitado,E.status,E.montada,E.falha,...[1,2,3,4].map(i=>!!E.pedacos?.[i])].join('|');
+    if(key===lastWebKey)return;lastWebKey=key;
+    webPreview.querySelector('.rv-web-url').textContent=site.slice(0,E.digitado||0)||'Digite um endereço...';
+    webPreview.querySelector('.rv-web-status').textContent=E.status||'Aguardando o navegador';
+    for(let i=1;i<=4;i++){
+      const el=webPreview.querySelector('[data-part="'+i+'"]');
+      const received=!!E.pedacos?.[i];el.classList.toggle('received',received);
+      el.textContent=received?['',site.replace(/^www\\./,''),'◈','Texto da página carregado','Explorar →'][i]:('Parte '+i+' aguardando');
+    }
+    webPreview.classList.toggle('has-error',!!E.falha);
+  }
   function packets(){
     const scene=lab.cena;
     for(const pk of scene.pacotes){
@@ -295,7 +389,11 @@
       soft.addColorStop(0,'rgba(19,126,193,.17)');soft.addColorStop(1,'rgba(2,7,17,0)');
       ctx.fillStyle=soft;ctx.fillRect(0,0,W,H);
     }
-    ground();cables();hotspots=[];
+    if(lab.aba?.id==='camadas'){
+      layers3d();
+    }else{
+      ground();cables();hotspots=[];
+    }
     const ns=bounds().ns.sort((a,b)=>{const p=pos(a),q=pos(b);return proj(q.x,0,q.z).depth-proj(p.x,0,p.z).depth});
     for(const n of ns)device(n);
     packets();
@@ -313,6 +411,16 @@
     }
   }
   function select(n){chosen=n;
+    if(n?.layer!=null){
+      const i=n.layer;
+      const name=layerNames[i];
+      const info=layerInfo[i];
+      lab.inspecionar('Camada '+(7-i)+': '+name,[['Unidade de dados',info[0]],['Função',info[1]]],{sub:'modelo OSI · representação 3D'});
+      ui.device.replaceChildren();
+      const b=document.createElement('b'),sp=document.createElement('span');
+      b.textContent='CAMADA '+(7-i)+' · '+name.toUpperCase();sp.textContent=info[1];ui.device.append(b,sp);
+      return;
+    }
     if(!n){ui.device.classList.remove('is-selected');ui.device.innerHTML='<b>EXPLORADOR DE REDE</b><span>Selecione um equipamento para ver detalhes.</span>';return;}
     ui.device.classList.add('is-selected');
     ui.device.replaceChildren();
@@ -389,7 +497,7 @@
   });
   surface.addEventListener('pointerup',ev=>{if(!pointer||pointer.id!==ev.pointerId)return;
     if(!drag){const rect=cv.getBoundingClientRect(),x=ev.clientX-rect.left,y=ev.clientY-rect.top;
-      const hit=hotspots.map(h=>({...h,d:Math.hypot(h.x-x,h.y-y)})).sort((a,b)=>a.d-b.d)[0];
+      const hit=hotspots.map(h=>({...h,d:h.rect&&x>=h.rect.x&&x<=h.rect.x+h.rect.w&&y>=h.rect.y&&y<=h.rect.y+h.rect.h?0:Math.hypot(h.x-x,h.y-y)})).sort((a,b)=>a.d-b.d)[0];
       // Click/tap the actual simulated cable to disconnect/reconnect it.
       const wires=cableHits.map(item=>{
         const ax=item.a.x,ay=item.a.y,bx=item.b.x,by=item.b.y,dx=bx-ax,dy=by-ay;

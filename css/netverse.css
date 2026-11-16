@@ -371,3 +371,19 @@ body.rvstudio-active {overflow:hidden;}
 /* Keep mobile 3D objects unobstructed by the inspector placeholder. */
 .rvstudio-inline-device:not(.is-selected){display:none;}
 @media(max-width:760px){.rvstudio-inline-device.is-selected{top:69px;bottom:auto;left:7px;right:7px;max-width:none;}}
+/* Browser reconstruction remains visible while the 3D network transmits its real packets. */
+.rv-web-preview[hidden]{display:none!important}
+.rv-web-preview{position:absolute;z-index:3;top:48px;left:10px;width:min(33%,290px);min-width:185px;max-height:42%;overflow:hidden;pointer-events:none;border:1px solid #2487b7;border-radius:10px;background:rgba(7,22,40,.94);box-shadow:0 8px 30px #0006;color:#d8f5ff;font:11px/1.3 system-ui,sans-serif}
+.rv-web-bar{display:flex;align-items:center;gap:8px;padding:7px 9px;background:#102f4a;border-bottom:1px solid #285d7c;min-width:0}
+.rv-web-dots{color:#43bce2;white-space:nowrap;font-size:9px}
+.rv-web-url{overflow:hidden;text-overflow:ellipsis;white-space:nowrap;font:10px ui-monospace,monospace}
+.rv-web-status{padding:5px 9px;color:#a6d3e8;font-size:10px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.rv-web-page{padding:6px;display:grid;grid-template-columns:1fr 1fr;grid-template-rows:28px 43px 28px;gap:4px}
+.rv-web-part{border:1px dashed #327799;border-radius:5px;background:#0b2135;color:#78a3b8;display:flex;align-items:center;justify-content:center;text-align:center;padding:3px;font-size:9px;overflow:hidden}
+.rv-web-part.received{border-style:solid;border-color:#40e3c4;background:#14425a;color:#e9fcff}
+.rv-web-header{grid-column:1/3;background:#103854}
+.rv-web-picture{grid-row:2/4;font-size:21px!important}
+.rv-web-action.received{background:#167c88}
+.rv-web-preview.has-error{border-color:#f66d7b}
+@media(max-width:760px){.rv-web-preview{top:65px;left:6px;width:min(53%,205px);min-width:130px;max-height:32%}.rv-web-page{grid-template-rows:22px 30px 22px;gap:2px}.rv-web-status{font-size:9px}.rv-web-part{font-size:8px}}
+@media(max-width:370px){.rv-web-preview{top:64px;width:46%;min-width:120px}.rv-web-dots{display:none}.rv-web-bar{padding:4px}.rv-web-status{padding:4px}}

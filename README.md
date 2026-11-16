@@ -187,3 +187,12 @@ Trabalho acadêmico de **Introdução à Rede de Computadores** — **Afya**. O 
 
 
 
+
+### Atualização: Camadas, Meios e Página Web (Canvas 2D)
+
+- **Camadas OSI/TCP-IP:** duas pilhas com sete prismas interativos, destaque do passo ativo e informações da unidade de dados. Clique/toque em uma camada para consultar o Inspetor. O diagrama original continua disponível pelo botão **Diagrama**.
+- **Meios de transmissão:** as três conexões da cena 3D recebem rótulos **PAR TRANÇADO (COBRE)**, **FIBRA ÓPTICA** e **WI-FI (ONDAS DE RÁDIO)**, vinculados às conexões reais da simulação.
+- **Página web:** o navegador acompanha a rede 3D, mostrando a URL digitada, o estado da conexão e os quatro pedaços da página conforme chegam.
+- **Responsividade:** ajustes de largura, tipografia e disposição do navegador para celulares pequenos. O modo leve continua disponível.
+
+Tudo é desenhado com Canvas 2D e CSS nativo, sem dependências adicionais. A lógica de pacotes, DNS, TCP, interferência e resultados didáticos permanece a mesma.

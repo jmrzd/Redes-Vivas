@@ -952,7 +952,7 @@ class Lab {
       this.zoomLabel.textContent=Math.round(cam.zoom*100)+'%';
       this.cv.classList.toggle('rv3d-zoomed',cam.zoom>1);
     };
-    this.mode3d = this.aba.id !== 'camadas'; // Camadas uses its own interactive isometric 3D stacks.
+    this.mode3d = true; // All 12 modules use the immersive view; the original diagram remains optional.
     const useView = mode => {
       this.mode3d = mode;
       this.bVisao3d.setAttribute('aria-pressed',String(mode));
