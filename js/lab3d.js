@@ -243,7 +243,7 @@
     const header=document.createElement('div');header.className='rv3d-preview-heading';
     header.innerHTML='<span><b>REDE 3D AO VIVO</b> <small>PC → SWITCH → ROTEADOR → WEB</small></span>';
     const btn=document.createElement('button');btn.type='button';btn.textContent='Explorar transmissão →';
-    btn.addEventListener('click',()=>window.RedesVivas?.App?.abrir('pagina-web'));
+    btn.addEventListener('click',()=>{window.RedesVivas?.App?.abrir('pagina-web');setTimeout(()=>window.RedesVivasStudio?.open(window.RedesVivas?.App?.labAtivo),80);});
     header.append(btn);
     const cv=document.createElement('canvas');cv.className='rv3d-preview-canvas';cv.setAttribute('role','img');
     cv.setAttribute('aria-label','Prévia animada da rede 3D: computador, switch, roteador e servidor');

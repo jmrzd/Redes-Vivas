@@ -312,8 +312,13 @@
       quality.setAttribute('aria-pressed',String(lite));resize();
     });
     const actions=document.querySelector('.topo-acoes');if(actions)actions.append(quality);
+    document.documentElement.addEventListener('rvqualitychange',()=>{
+      lite=document.documentElement.classList.contains('fx-lite');
+      quality.textContent=`Modo leve: ${lite?'ligado':'desligado'}`;
+      quality.setAttribute('aria-pressed',String(lite));resize();
+    });
     resize();
-    if(prefersReduced || (navigator.hardwareConcurrency&&navigator.hardwareConcurrency<=2))quality.click();
+    if(prefersReduced || (navigator.hardwareConcurrency&&navigator.hardwareConcurrency<=2) || (navigator.deviceMemory&&navigator.deviceMemory<=2))quality.click();
     buttons.skip.addEventListener('click',()=>leave('inicio'));
     buttons.open.addEventListener('click',()=>leave('camadas'));
     buttons.demo.addEventListener('click',()=>leave('pagina-web',true));

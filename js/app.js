@@ -617,7 +617,13 @@ class Cena {
       n.caixa = null; return;
     }
     const density = this.nos.size >= 9 ? .85 : this.nos.size >= 7 ? .93 : 1;
-    const t = u * n.tam * density;
+    // Enlarges models when there is space, without covering neighbouring devices.
+    const spacing = Math.min(...[...this.nos.values()].filter(other => other !== n && !other.oculto && other.tipo !== 'junta' && other.tipo !== 'terminador').map(other => {
+      const pp = this.pos(other); return Math.hypot(pp.x - p.x, pp.y - p.y);
+    }), Infinity);
+    const base = u * n.tam * density;
+    const detailScale = Math.min(1.34, Math.max(1, spacing / (base * 2)));
+    const t = base * detailScale;
     const lite = document.documentElement.classList.contains('fx-lite');
     const supported = !!(window.RedesVivas3D && window.RedesVivas3D.types.has(n.tipo));
     const tint = Tema.cor(n.cor || '--p-tcp');
@@ -948,6 +954,7 @@ class Lab {
     };
     this.viewBar = h('div', { class: 'rv3d-toolbar' },
       h('span', { class: 'rv3d-indicator' }, '◆ VISÃO 3D LEVE'),
+      h('button', {type:'button',class:'rv3d-open-studio',title:'Abrir esta simulação em uma cena 3D interativa',onclick:()=>window.RedesVivasStudio?.open(this)},'◈ Explorar cena 3D'),
       h('span', { class: 'rv3d-toolbar-info' }, 'Mude o ângulo dos equipamentos'),
       h('div', { class: 'rv3d-view-buttons' },
         h('button', { type:'button', title:'Girar os equipamentos para a esquerda', 'aria-label':'Visão pela esquerda', onclick:()=>orbit(-1) }, '◀'),
@@ -1223,13 +1230,14 @@ class Lab {
   }
 
   /* um quadro da animação (chamado pelo laço principal) */
-  quadro(agora) {
+  quadro(agora, suspenderDesenho = false) {
     let dt = this.ultimo ? agora - this.ultimo : 16;
     this.ultimo = agora;
     dt = Math.min(dt, 60);
     if (!this.palco.W) this.palco.ajustar();
     if (this.relogio) this.cena.avancar(dt * this.vel);
-    this.cena.desenhar();
+    // 3D viewer reuses the same simulation and avoids rendering a hidden canvas.
+    if (!suspenderDesenho) this.cena.desenhar();
   }
 }
 
@@ -3856,6 +3864,7 @@ const App = {
 
   /* atalhos de teclado (ignorados enquanto a pessoa digita em um campo) */
   tecla(ev) {
+    if (window.RedesVivasStudio?.isOpen()) return;
     const al = ev.target, tag = al && al.tagName;
     if (ev.ctrlKey || ev.metaKey || ev.altKey) return;
     if (tag === 'INPUT' || tag === 'SELECT' || tag === 'TEXTAREA') return;
@@ -3885,7 +3894,7 @@ const App = {
     const fpsDelay = document.documentElement.classList.contains('fx-lite') || window.innerWidth <= 760 || window.matchMedia('(prefers-reduced-motion: reduce)').matches ? 33 : 16;
     if (!document.hidden && !document.body.classList.contains('intro-active') && this.labAtivo &&
         (!this._ultimoRender || t - this._ultimoRender >= fpsDelay)) {
-      this.labAtivo.quadro(t);
+      this.labAtivo.quadro(t, !!window.RedesVivasStudio?.isOpen());
       this._ultimoRender = t;
     }
     requestAnimationFrame(tt => this.laco(tt));

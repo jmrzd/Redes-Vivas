@@ -244,3 +244,84 @@ canvas.palco.rv3d-zoomed:active {cursor:grabbing;}
   .rv3d-zoom-buttons button {min-width:34px;min-height:36px;}
   .rv3d-toolbar {justify-content:space-between;}
 }
+
+/* Redes Vivas 3D Studio — overlay is mounted once, only animates when open. */
+.rv3d-open-studio {
+  appearance:none;border:1px solid #2aaddb;background:linear-gradient(120deg,#0b3f65,#13538c);
+  color:#ecfaff;cursor:pointer;border-radius:8px;padding:9px 13px;min-height:35px;
+  font:700 11px/1 var(--f-body);letter-spacing:.025em;
+  box-shadow:inset 0 1px rgba(255,255,255,.14),0 0 18px rgba(18,179,244,.16);
+  transition:background .17s,transform .17s;
+}
+.rv3d-open-studio:hover {background:linear-gradient(120deg,#145e88,#1c76ab);transform:translateY(-1px);}
+.rv3d-open-studio:focus-visible {outline:2px solid #77e8ff;outline-offset:3px;}
+.rvstudio[hidden] {display:none!important;}
+body.rvstudio-active {overflow:hidden;}
+.rvstudio {
+  position:fixed;inset:0;z-index:1400;background:#03070e;
+  display:flex;align-items:center;justify-content:center;padding:clamp(6px,1.2vw,18px);
+  color:#e7f9ff;font-family:var(--f-body);isolation:isolate;
+}
+.rvstudio-shell {
+  border:1px solid #225272;border-radius:17px;width:100%;height:min(920px,calc(100dvh - 14px));
+  display:flex;flex-direction:column;min-width:0;overflow:hidden;
+  box-shadow:0 0 0 1px #0d2f52,0 12px 65px #0008;
+  background:#071020;
+}
+.rvstudio-head {display:flex;align-items:center;justify-content:space-between;gap:12px;padding:12px 18px;
+  background:linear-gradient(90deg,#081f38,#09162a);border-bottom:1px solid #214461;flex:none;}
+.rvstudio-brand {display:flex;align-items:center;gap:12px;min-width:0;}
+.rvstudio-logo {font-size:34px;line-height:1;color:#46e9ff;text-shadow:0 0 19px #3ec8ff88;}
+.rvstudio-brand strong {display:block;font:800 clamp(17px,2vw,22px)/1.14 var(--f-display);letter-spacing:.11em;}
+.rvstudio-brand strong span {color:#60dcfa;}
+.rvstudio-brand small {display:block;color:#85a6c5;font-size:12px;margin-top:4px;}
+.rvstudio-head-buttons {display:flex;gap:8px;align-items:center;flex:none;}
+.rvstudio-head button,.rvstudio-controls button {background:#102b47;border:1px solid #376388;color:#e0f4ff;
+  border-radius:9px;min-height:36px;padding:7px 13px;font-size:12px;font-weight:700;cursor:pointer;}
+.rvstudio-head button:hover,.rvstudio-controls button:hover {background:#235176;}
+.rvstudio-head button[aria-pressed=true] {border-color:#42e7ca;color:#65ffe7;}
+.rvstudio-stage {position:relative;flex:1;min-height:0;background:radial-gradient(ellipse at 55% 60%,#0a2740,#020815);}
+#rvstudio-canvas {width:100%;height:100%;display:block;touch-action:none;cursor:grab;}
+#rvstudio-canvas:active {cursor:grabbing;}
+.rvstudio-hint,.rvstudio-status,.rvstudio-device,.rvstudio-controls {
+  position:absolute;pointer-events:none;z-index:1;
+}
+.rvstudio-hint {top:16px;left:20px;font:700 11px var(--f-mono);letter-spacing:.12em;color:#83aac7;}
+.rvstudio-hint span {color:#21dbf5;}
+.rvstudio-status {top:16px;right:18px;display:flex;align-items:center;gap:10px;background:#051328bd;
+  border:1px solid #21455f;border-radius:8px;padding:7px 10px;font:600 10px var(--f-mono);color:#a8d0df;}
+.rvstudio-light {height:7px;width:7px;background:#42f4bb;border-radius:50%;box-shadow:0 0 12px #36ffa8;}
+.rvstudio-device {left:16px;bottom:16px;max-width:min(52%,370px);display:grid;gap:6px;
+  padding:11px 14px;border:1px solid #315c77;border-radius:11px;background:#071b31ea;box-shadow:0 3px 15px #02091280;}
+.rvstudio-device b {color:#61e7ff;font:750 12px var(--f-mono);letter-spacing:.09em;}
+.rvstudio-device span {color:#c0d5e9;font-size:12px;line-height:1.4;overflow-wrap:anywhere;}
+.rvstudio-controls {right:16px;bottom:15px;display:flex;gap:6px;align-items:center;pointer-events:auto;
+  padding:6px;border-radius:10px;background:#061528e8;border:1px solid #2e526e;}
+.rvstudio-controls output {font:700 11px var(--f-mono);min-width:40px;text-align:center;}
+.rvstudio-controls button {padding:6px 10px;min-width:36px;}
+.rvstudio-controls > span {color:#35536d;}
+.rvstudio-footer {flex:none;display:flex;justify-content:space-between;gap:10px;flex-wrap:wrap;
+  padding:9px 17px;background:#071525;border-top:1px solid #1f3e57;
+  font:650 10px var(--f-mono);letter-spacing:.045em;color:#7695b6;}
+@media (max-width:760px) {
+  .rv3d-toolbar {gap:8px;}
+  .rv3d-open-studio {min-height:42px;padding:9px 10px;order:1;flex:1 1 100%;}
+  .rvstudio {padding:0;}
+  .rvstudio-shell {height:100dvh;border-radius:0;border:0;}
+  .rvstudio-head {padding:9px 10px;gap:7px;}
+  .rvstudio-brand {gap:6px;}
+  .rvstudio-logo {font-size:25px;}
+  .rvstudio-brand strong {font-size:14px;letter-spacing:.05em;}
+  .rvstudio-brand small {font-size:10px;}
+  .rvstudio-head-buttons {gap:5px;}
+  .rvstudio-head button {padding:7px;min-height:40px;font-size:10px;}
+  .rvstudio-hint {top:10px;left:11px;font-size:9px;max-width:60%;line-height:1.4;}
+  .rvstudio-status {top:43px;right:8px;gap:7px;font-size:9px;padding:5px 7px;}
+  .rvstudio-device {left:8px;right:8px;bottom:70px;max-width:none;padding:8px 11px;}
+  .rvstudio-controls {bottom:9px;left:7px;right:7px;justify-content:center;gap:5px;padding:5px;}
+  .rvstudio-controls button {min-height:41px;flex:1;padding:7px 5px;}
+  .rvstudio-footer {padding:5px 10px;gap:4px;font-size:8px;}
+  .rvstudio-footer span:last-child {display:none;}
+}
+@media (max-width:355px){.rvstudio-controls button{font-size:10px;min-width:30px}.rvstudio-controls output{min-width:32px}}
+@media (prefers-reduced-motion:reduce){.rv3d-open-studio{transition:none!important;}}
