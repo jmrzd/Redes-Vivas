@@ -196,3 +196,12 @@ Trabalho acadêmico de **Introdução à Rede de Computadores** — **Afya**. O 
 - **Responsividade:** ajustes de largura, tipografia e disposição do navegador para celulares pequenos. O modo leve continua disponível.
 
 Tudo é desenhado com Canvas 2D e CSS nativo, sem dependências adicionais. A lógica de pacotes, DNS, TCP, interferência e resultados didáticos permanece a mesma.
+
+
+### Correções de estabilidade (zoom e Camadas)
+
+- A abertura mantém o mesmo bitmap de Canvas quando o usuário gira a roda do mouse: o zoom não deve mais provocar quadros pretos por limpeza repetida do Canvas. O limite de aproximação foi ajustado para preservar a leitura dos botões.
+- O laboratório **Camadas OSI e TCP/IP** desenha apenas as duas pilhas 3D interativas; modelos de PCs/servidores ilustrativos não se sobrepõem mais aos blocos.
+- O zoom é reiniciado ao trocar de laboratório, evitando cenas enquadradas fora da tela.
+- Em telas estreitas, as legendas das pilhas são abreviadas e o indicador de estado do explorador deixa de encobrir o conteúdo.
+- Testes locais de navegação nas doze abas e visualizações responsivas.

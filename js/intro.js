@@ -40,7 +40,13 @@
   function resize() {
     W=Math.max(300,canvas.clientWidth); H=Math.max(300,canvas.clientHeight);
     dpr=Math.min(devicePixelRatio||1,lite ? 1 : mobile()?1.25:1.65);
-    canvas.width=Math.round(W*dpr); canvas.height=Math.round(H*dpr);
+    // Setting canvas.width or height ALWAYS clears the drawing. Wheel zoom
+    // previously called resize() for every wheel event, so fast scrolling
+    // continuously erased the scene before requestAnimationFrame could paint.
+    const pixelW=Math.round(W*dpr),pixelH=Math.round(H*dpr);
+    if(canvas.width!==pixelW || canvas.height!==pixelH){
+      canvas.width=pixelW;canvas.height=pixelH;
+    }
     ctx.setTransform(dpr,0,0,dpr,0,0);
     scale=Math.min(mobile()?W/5.65:W/10.2,H/(mobile()?7.8:5.9),mobile()?76:145)*zoom;
   }
@@ -332,7 +338,7 @@
     document.addEventListener('keydown',e=>{if(running&&e.key==='Escape'){e.preventDefault();leave('inicio');}});
     canvas.addEventListener('pointerdown',onDown);canvas.addEventListener('pointermove',onMove);
     canvas.addEventListener('pointerup',onUp);canvas.addEventListener('pointercancel',()=>pointer=null);
-    canvas.addEventListener('wheel',e=>{e.preventDefault();zoom=clamp(zoom-e.deltaY*.0004,.7,1.32);resize();},{passive:false});
+    canvas.addEventListener('wheel',e=>{e.preventDefault();const next=clamp(zoom-e.deltaY*.0004,.78,mobile()?1.16:1.18);if(next!==zoom){zoom=next;resize();}},{passive:false});
     window.addEventListener('resize',resize);
     document.addEventListener('visibilitychange',()=>{last=0;});
     // A direct module link goes straight to the existing lab.

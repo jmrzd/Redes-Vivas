@@ -310,7 +310,7 @@
     for(let side=0;side<2;side++){
       const x=side?right:left;
       ctx.font=`700 ${mobile()?10:12}px system-ui,sans-serif`;
-      ctx.fillStyle='#b5dfff';ctx.fillText(side?'DESTINO · DESENCAPSULAMENTO':'ORIGEM · ENCAPSULAMENTO',x+cw/2,top-25,cw+8);
+      ctx.fillStyle='#b5dfff';ctx.fillText(side?(mobile()?'DESTINO · RECEBE':'DESTINO · DESENCAPSULAMENTO'):(mobile()?'ORIGEM · ENVIA':'ORIGEM · ENCAPSULAMENTO'),x+cw/2,top-25,cw+8);
       for(let i=0;i<7;i++){
         const y=top+i*(blockH+5),c=layerColors[i],on=(side?E?.ativaD:E?.ativaO)===i;
         const d=mobile()?7:11;
@@ -389,16 +389,20 @@
       soft.addColorStop(0,'rgba(19,126,193,.17)');soft.addColorStop(1,'rgba(2,7,17,0)');
       ctx.fillStyle=soft;ctx.fillRect(0,0,W,H);
     }
+    // Camadas is a lesson about protocol layers, NOT an equipment topology.
+    // The previous release drew the illustrative hardware on TOP of the OSI
+    // prisms and stole the layer hit targets. Keep only its own 3D diagram.
     if(lab.aba?.id==='camadas'){
       layers3d();
     }else{
       ground();cables();hotspots=[];
+      const ns=bounds().ns.sort((a,b)=>{const p=pos(a),q=pos(b);return proj(q.x,0,q.z).depth-proj(p.x,0,p.z).depth});
+      for(const n of ns)device(n);
+      packets();
+      mediaLabels();
     }
-    const ns=bounds().ns.sort((a,b)=>{const p=pos(a),q=pos(b);return proj(q.x,0,q.z).depth-proj(p.x,0,p.z).depth});
-    for(const n of ns)device(n);
-    packets();
     ui.state.textContent=lab.relogio?'SIMULAÇÃO ATIVA':'SIMULAÇÃO PAUSADA';
-    ui.packets.textContent=lab.cena.pacotes.filter(pk=>pk.vivo).length+' PACOTES';
+    ui.packets.textContent=lab.aba?.id==='camadas' ? '7 CAMADAS OSI' : lab.cena.pacotes.filter(pk=>pk.vivo).length+' PACOTES';
     // Real frame timing is diagnostic and can trigger one-time adaptive quality fallback.
     const elapsed=performance.now()-start;
     perf.avgDrawMs=perf.samples?perf.avgDrawMs*.92+elapsed*.08:elapsed;
@@ -412,6 +416,7 @@
   }
   function select(n){chosen=n;
     if(n?.layer!=null){
+      ui.device.classList.add('is-selected');
       const i=n.layer;
       const name=layerNames[i];
       const info=layerInfo[i];
@@ -460,12 +465,18 @@
     if(raf){cancelAnimationFrame(raf);raf=0;}
     lab=null;
     if(!l||!l.cena||!l.elMoldura)return;
+    const previousLab=inlineLab;
     inlineLab=l;lab=l;
+    inline.classList.toggle('rv-layers',l.aba?.id==='camadas');
     l.elMoldura.append(inline);l.elMoldura.classList.add('rv3d-immersive');
     inline.hidden=false;inlineMode=true;
     cv=inlineCanvas;ctx=cv.getContext('2d',{alpha:false});ui=inlineUi;
-    const first=!l._rv3dVisited;
-    if(first){cam={yaw:mobile()?.08:.54,target:mobile()?.08:.54,pitch:.55,zoom:1,centerX:0,centerZ:0};l._rv3dVisited=true;}
+    // Camera belongs to this scene. Carrying 225% zoom to another module
+    // could push every object outside the viewport, looking like a black scene.
+    if(previousLab!==l || !l._rv3dVisited){
+      cam={yaw:mobile()?.08:.54,target:mobile()?.08:.54,pitch:.55,zoom:1,centerX:0,centerZ:0};
+      l._rv3dVisited=true;
+    }
     ui.zoom.textContent=Math.round(cam.zoom*100)+'%';
     chosen=null;select(null);last=0;lastTouch=performance.now();
     perf={samples:0,elapsed:0,frameMs:0,drawMs:0,avgDrawMs:0,actualFps:0,autoLite:false};

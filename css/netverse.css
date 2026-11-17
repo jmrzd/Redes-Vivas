@@ -387,3 +387,9 @@ body.rvstudio-active {overflow:hidden;}
 .rv-web-preview.has-error{border-color:#f66d7b}
 @media(max-width:760px){.rv-web-preview{top:65px;left:6px;width:min(53%,205px);min-width:130px;max-height:32%}.rv-web-page{grid-template-rows:22px 30px 22px;gap:2px}.rv-web-status{font-size:9px}.rv-web-part{font-size:8px}}
 @media(max-width:370px){.rv-web-preview{top:64px;width:46%;min-width:120px}.rv-web-dots{display:none}.rv-web-bar{padding:4px}.rv-web-status{padding:4px}}
+
+/* On narrow viewports the status badge covered the OSI lesson headings.
+   The original lab status above the stage remains visible. */
+@media(max-width:760px){
+  .rvstudio-inline.rv-layers .rvstudio-inline-state{display:none}
+}
