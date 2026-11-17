@@ -205,3 +205,13 @@ Tudo é desenhado com Canvas 2D e CSS nativo, sem dependências adicionais. A l�
 - O zoom é reiniciado ao trocar de laboratório, evitando cenas enquadradas fora da tela.
 - Em telas estreitas, as legendas das pilhas são abreviadas e o indicador de estado do explorador deixa de encobrir o conteúdo.
 - Testes locais de navegação nas doze abas e visualizações responsivas.
+
+
+## Otimização de interação no celular (novembro de 2026)
+
+- O arrasto acompanha o dedo diretamente, sem atraso da interpolação da câmera.
+- Coordenadas e limites dos equipamentos são calculados uma vez por quadro; evita-se reconstruir as listas de nós para cada desenho.
+- O Canvas só consulta medidas de layout ao redimensionar; gradientes são reutilizados.
+- Em telas pequenas, a cena utiliza escala de pixels limitada e simplifica temporariamente brilhos e grades durante o arrasto.
+- A rotação automática fica desativada no celular e a interface deixa de reescrever indicadores inalterados a cada quadro.
+- Simulações, equipamentos 3D, inspeção por toque, controles e modo leve foram preservados.

@@ -56,6 +56,38 @@
       pointer=null,drag=false,chosen=null,hotspots=[],cableHits=[],previousFocus=null,lastTouch=0,
       perf={samples:0,elapsed:0,frameMs:0,drawMs:0,avgDrawMs:0,actualFps:0,autoLite:false};
   const mobile=()=>W<650;
+  // Cache topology for the duration of one frame. Previously pos() rebuilt the
+  // entire node list for EVERY projected polygon vertex on mobile (O(n²)).
+  let frameNodes=[],framePositions=new Map(),frameBounds=null,needsResize=true;
+  let bgGradient=null,softGradient=null,frameSimple=false;
+  const resizeObserver=typeof ResizeObserver==='undefined'?null:new ResizeObserver(()=>{needsResize=true;});
+  if(resizeObserver){resizeObserver.observe(modalCanvas);resizeObserver.observe(inlineCanvas);}
+  const simpleQuality=()=>lite()||frameSimple;
+  const themeColorCache=new Map();let lastThemeSignature='';
+  // Suspend rendering when the 3D canvas scrolls out of view. The simulation continues.
+  const inView=new WeakMap();
+  if(typeof IntersectionObserver!=='undefined'){
+    const watch=new IntersectionObserver(entries=>{
+      for(const entry of entries)inView.set(entry.target,entry.isIntersecting);
+    },{threshold:.01});
+    watch.observe(modalCanvas);watch.observe(inlineCanvas);
+  }
+  function captureTopology(){
+    frameNodes=sceneNodes();framePositions.clear();
+    const cols=frameNodes.length>7?3:2,rows=Math.ceil(frameNodes.length/cols);
+    const vertical=mobile();
+    let x0=Infinity,x1=-Infinity,z0=Infinity,z1=-Infinity;
+    frameNodes.forEach((n,i)=>{
+      const p=vertical
+        ?{x:((i%cols)-(cols-1)/2)*(cols===3?2.25:2.9),z:(Math.floor(i/cols)-(rows-1)/2)*3.35}
+        :{x:((Number.isFinite(n.fx)?n.fx:.5)-.5)*7-((Number.isFinite(n.fy)?n.fy:.5)-.5)*1.4,
+          z:((Number.isFinite(n.fy)?n.fy:.5)-.5)*4};
+      framePositions.set(n,p);
+      x0=Math.min(x0,p.x);x1=Math.max(x1,p.x);z0=Math.min(z0,p.z);z1=Math.max(z1,p.z);
+    });
+    frameBounds=frameNodes.length?{ns:frameNodes,x0,x1,z0,z1}:{ns:[],x0:-3,x1:3,z0:-2,z1:2};
+  }
+
   // Educational 3D vignette for Camadas OSI/TCP-IP: its teaching canvas has no device nodes.
   // This is explicitly illustrative; it never adds fictional packets to the simulation.
   const illustrative=[
@@ -68,33 +100,44 @@
   const sceneNodes=()=>{const ns=realNodes();return ns.length?ns:illustrative;};
   const lite=()=>document.documentElement.classList.contains('fx-lite');
   function tintOf(n){
-    if(n.cor){const val=getComputedStyle(document.documentElement).getPropertyValue(n.cor).trim();if(/^#[\da-f]{6}$/i.test(val))return val;}
+    if(n.cor){
+      let value=themeColorCache.get(n.cor);
+      if(value===undefined){
+        value=getComputedStyle(document.documentElement).getPropertyValue(n.cor).trim();
+        themeColorCache.set(n.cor,value);
+      }
+      if(/^#[\da-f]{6}$/i.test(value))return value;
+    }
     return ({servidor:'#ffae67',pc:'#33cefa',laptop:'#33cefa',switch:'#1dedcd',hub:'#20e5ba',roteador:'#a890ff',firewall:'#fb6179',nuvem:'#52c8ff',globo:'#51b2ef',celular:'#34d9ff',ap:'#27e5d6',espiao:'#ff798e',sensor:'#f5cc6d'})[n.tipo]||'#5bd7ff';
   }
   function rgba(hex,a){const t=parseInt(hex.slice(1),16);return `rgba(${t>>16},${t>>8&255},${t&255},${a})`}
   function pos(n){
-    if(mobile()&&lab){
-      // Portrait storyboard: uses the canvas height instead of crushing 5-12 nodes into one line.
-      const ns=sceneNodes(),i=ns.indexOf(n);
-      if(i>=0){const cols=ns.length>7?3:2,rows=Math.ceil(ns.length/cols);
-        return {x:((i%cols)-(cols-1)/2)*(cols===3?2.25:2.9),z:(Math.floor(i/cols)-(rows-1)/2)*3.35};}
-    }
-    const px=(Number.isFinite(n.fx)?n.fx:.5),py=(Number.isFinite(n.fy)?n.fy:.5);
+    const cached=framePositions.get(n);
+    if(cached)return cached;
+    const px=Number.isFinite(n.fx)?n.fx:.5,py=Number.isFinite(n.fy)?n.fy:.5;
     return {x:(px-.5)*7-(py-.5)*1.4,z:(py-.5)*4};
   }
-  function bounds(){
-    const ns=sceneNodes();
-    if(!ns.length)return {ns,x0:-3,x1:3,z0:-2,z1:2};
-    const points=ns.map(pos);
-    return {ns,x0:Math.min(...points.map(p=>p.x)),x1:Math.max(...points.map(p=>p.x)),z0:Math.min(...points.map(p=>p.z)),z1:Math.max(...points.map(p=>p.z))};
-  }
+  function bounds(){return frameBounds||{ns:[],x0:-3,x1:3,z0:-2,z1:2};}
   function sizing(){
     if(!lab)return;
-    const r=cv.getBoundingClientRect();W=Math.max(280,r.width);H=Math.max(300,r.height);
-    ratio=Math.min(devicePixelRatio||1,lite()?1:(mobile()?1.15:1.5));
-    const width=Math.round(W*ratio),height=Math.round(H*ratio);
-    if(cv.width!==width||cv.height!==height){cv.width=width;cv.height=height;}
-    const b=bounds();const extentX=b.x1-b.x0+2.3,extentZ=b.z1-b.z0+3.3;
+    // Reading layout every animation frame forces synchronous iOS Safari reflow.
+    if(needsResize){
+      const r=cv.getBoundingClientRect();W=Math.max(280,r.width);H=Math.max(300,r.height);
+      ratio=Math.min(devicePixelRatio||1,lite()?1:(W<650?1:1.5));
+      const width=Math.round(W*ratio),height=Math.round(H*ratio);
+      if(cv.width!==width||cv.height!==height){cv.width=width;cv.height=height;}
+      needsResize=false;bgGradient=null;softGradient=null;
+    }
+    // Mode-leve and browser pixel-density changes must update the backing store.
+    const desiredRatio=Math.min(devicePixelRatio||1,lite()?1:(mobile()?1:1.5));
+    if(desiredRatio!==ratio){
+      ratio=desiredRatio;
+      const width=Math.round(W*ratio),height=Math.round(H*ratio);
+      if(cv.width!==width||cv.height!==height){cv.width=width;cv.height=height;}
+      bgGradient=null;softGradient=null;
+    }
+    captureTopology();
+    const b=bounds(),extentX=b.x1-b.x0+2.3,extentZ=b.z1-b.z0+3.3;
     scale=Math.min(mobile()?W/(extentX*1.20):W/(extentX*1.06),H/(extentZ*.65+2.05),mobile()?84:130)*cam.zoom;
     cam.centerX=(b.x0+b.x1)/2;cam.centerZ=(b.z0+b.z1)/2;
   }
@@ -115,7 +158,7 @@
   }
   function point(x,y,z,r,fill,glow=false){
     const p=proj(x,y,z);
-    if(glow&&!lite()){
+    if(glow&&!simpleQuality()){
       ctx.fillStyle=rgba(fill,.14);ctx.beginPath();ctx.arc(p.x,p.y,r*3,0,TAU);ctx.fill();
     }
     ctx.fillStyle=fill;ctx.beginPath();ctx.arc(p.x,p.y,r,0,TAU);ctx.fill();
@@ -141,7 +184,7 @@
   function device(n){
     const {x,z}=pos(n),tint=tintOf(n),active=lab.relogio&&!n.desligado;
     const time=lab.cena.t,blink=active?Math.sin(time*.009+x*6)*.33+.67:.25;
-    const bob=active&&!prefersLess.matches&&!lite()?Math.sin(time*.0026+x*3)*.025:0;
+    const bob=active&&!prefersLess.matches&&!simpleQuality()?Math.sin(time*.0026+x*3)*.025:0;
     const highlight=n.brilho>0;
     // Shadow, volumetric plinth and pulsing port LEDs all use actual simulation state.
     const base=proj(x,0,z),rad=base.s*.52;
@@ -237,8 +280,10 @@
     const b=bounds(),x0=b.x0-1.1,x1=b.x1+1.1,z0=b.z0-1,z1=b.z1+1;
     poly([[x0,-.23,z0],[x1,-.23,z0],[x1,-.23,z1],[x0,-.23,z1]],'#091e34','#145472');
     const gx=(x1-x0)/10,gz=(z1-z0)/8;
-    ctx.save();for(let i=0;i<=10;i++)edge([x0+i*gx,-.225,z0],[x0+i*gx,-.225,z1],'rgba(66,145,192,.16)',.75);
-    for(let j=0;j<=8;j++)edge([x0,-.225,z0+j*gz],[x1,-.225,z0+j*gz],'rgba(66,145,192,.16)',.75);ctx.restore();
+    if(!frameSimple){
+      ctx.save();for(let i=0;i<=10;i++)edge([x0+i*gx,-.225,z0],[x0+i*gx,-.225,z1],'rgba(66,145,192,.16)',.75);
+      for(let j=0;j<=8;j++)edge([x0,-.225,z0+j*gz],[x1,-.225,z0+j*gz],'rgba(66,145,192,.16)',.75);ctx.restore();
+    }
     for(const n of b.ns){
       const p=pos(n),t=tintOf(n),q=proj(p.x,-.21,p.z);
       ctx.beginPath();ctx.ellipse(q.x,q.y,scale*.48,scale*.20,0,0,TAU);
@@ -337,7 +382,7 @@
   let lastWebKey='';
   function webBrowser(){
     const visible=inlineMode&&lab?.aba?.id==='pagina-web';
-    webPreview.hidden=!visible;
+    if(webPreview.hidden===visible)webPreview.hidden=!visible;
     if(!visible){lastWebKey='';return;}
     const E=lab.cena.E||{};
     const site=lab.cena.P?.site||'www.exemplo.com.br';
@@ -364,30 +409,41 @@
       const k=clamp(pk.k,0,1),x=p.x+(q.x-p.x)*k,z=p.z+(q.z-p.z)*k;
       const colors={dns:'#ffab53',tcp:'#4abfff',udp:'#3ee5f0',dados:'#55f9ae',cripto:'#ae99ff',ataque:'#ff6583',rede:'#ffe17d',bits:'#a5d4ff'};
       const tint=colors[pk.tipo]||'#9ff0ff';point(x,.25+Math.sin(Math.PI*k)*.22,z,3.5,tint,true);
-      if(!lite())for(let j=1;j<=3;j++)point(p.x+(x-p.x)*(1-j*.09),.23+Math.sin(Math.PI*k)*.2,p.z+(z-p.z)*(1-j*.09),Math.max(.8,3-j*.7),rgba(tint,.30),false);
+      if(!simpleQuality())for(let j=1;j<=3;j++)point(p.x+(x-p.x)*(1-j*.09),.23+Math.sin(Math.PI*k)*.2,p.z+(z-p.z)*(1-j*.09),Math.max(.8,3-j*.7),rgba(tint,.30),false);
     }
   }
   function render(now){
     if((modal.hidden&&!inlineMode)||!lab){raf=0;return;}
     raf=requestAnimationFrame(render);
-    if(document.hidden)return;
-    const delay=lite()?50:mobile()?34:17;
+    if(document.hidden||inView.get(cv)===false)return;
+    const signature=document.documentElement.className+'|'+document.documentElement.getAttribute('data-theme');
+    if(lastThemeSignature!==signature){themeColorCache.clear();lastThemeSignature=signature;}
+    // Keep direct touch interaction responsive, while saving battery at rest.
+    const touching=!!pointer&&drag;
+    const delay=mobile()?(touching?27:(lite()?50:34)):(lite()?50:17);
     if(now-last<delay)return;
     const start=performance.now();
     if(!perf.elapsed)perf.elapsed=now;
     last=now;sizing();
-    if(!lite()&&!prefersLess.matches&&now-lastTouch>3000){
-      // Slowly orbit around the topology like the animated opening, only while idle.
-      cam.target=(mobile()?.09:.35)+Math.sin(now*.00018)*(mobile()?.13:.25);
+    frameSimple=mobile()&&touching;
+    // On phones don't override the user's chosen camera with auto-orbit.
+    if(!mobile()&&!lite()&&!prefersLess.matches&&now-lastTouch>5000){
+      cam.target=.35+Math.sin(now*.00018)*.25;
     }
-    cam.yaw+=(cam.target-cam.yaw)*.12;
+    // Touch tracks the finger immediately. Buttons retain a short smooth turn.
+    cam.yaw+=(cam.target-cam.yaw)*(touching?1:(mobile()?.30:.12));
     ctx.setTransform(ratio,0,0,ratio,0,0);
-    const bg=ctx.createLinearGradient(0,0,W,H);bg.addColorStop(0,'#030811');bg.addColorStop(.55,'#07172c');bg.addColorStop(1,'#041025');
-    ctx.fillStyle=bg;ctx.fillRect(0,0,W,H);
-    if(!lite()){
-      const soft=ctx.createRadialGradient(W*.52,H*.61,10,W*.52,H*.61,W*.6);
-      soft.addColorStop(0,'rgba(19,126,193,.17)');soft.addColorStop(1,'rgba(2,7,17,0)');
-      ctx.fillStyle=soft;ctx.fillRect(0,0,W,H);
+    if(!bgGradient){
+      bgGradient=ctx.createLinearGradient(0,0,W,H);
+      bgGradient.addColorStop(0,'#030811');bgGradient.addColorStop(.55,'#07172c');bgGradient.addColorStop(1,'#041025');
+    }
+    ctx.fillStyle=bgGradient;ctx.fillRect(0,0,W,H);
+    if(!simpleQuality()){
+      if(!softGradient){
+        softGradient=ctx.createRadialGradient(W*.52,H*.61,10,W*.52,H*.61,W*.6);
+        softGradient.addColorStop(0,'rgba(19,126,193,.17)');softGradient.addColorStop(1,'rgba(2,7,17,0)');
+      }
+      ctx.fillStyle=softGradient;ctx.fillRect(0,0,W,H);
     }
     // Camadas is a lesson about protocol layers, NOT an equipment topology.
     // The previous release drew the illustrative hardware on TOP of the OSI
@@ -396,13 +452,16 @@
       layers3d();
     }else{
       ground();cables();hotspots=[];
-      const ns=bounds().ns.sort((a,b)=>{const p=pos(a),q=pos(b);return proj(q.x,0,q.z).depth-proj(p.x,0,p.z).depth});
+      const ns=frameNodes.slice().sort((a,b)=>{const p=pos(a),q=pos(b);return proj(q.x,0,q.z).depth-proj(p.x,0,p.z).depth});
       for(const n of ns)device(n);
       packets();
       mediaLabels();
     }
-    ui.state.textContent=lab.relogio?'SIMULAÇÃO ATIVA':'SIMULAÇÃO PAUSADA';
-    ui.packets.textContent=lab.aba?.id==='camadas' ? '7 CAMADAS OSI' : lab.cena.pacotes.filter(pk=>pk.vivo).length+' PACOTES';
+    const status=lab.relogio?'SIMULAÇÃO ATIVA':'SIMULAÇÃO PAUSADA';
+    const packetCount=lab.aba?.id==='camadas'?'7 CAMADAS OSI':lab.cena.pacotes.filter(pk=>pk.vivo).length+' PACOTES';
+    // Avoid DOM writes on every frame: on iOS they can force Canvas reflow.
+    if(ui.state.textContent!==status)ui.state.textContent=status;
+    if(ui.packets.textContent!==packetCount)ui.packets.textContent=packetCount;
     // Real frame timing is diagnostic and can trigger one-time adaptive quality fallback.
     const elapsed=performance.now()-start;
     perf.avgDrawMs=perf.samples?perf.avgDrawMs*.92+elapsed*.08:elapsed;
@@ -448,7 +507,7 @@
     cam={yaw:innerWidth<650?.08:.54,target:innerWidth<650?.08:.54,pitch:.55,zoom:1,centerX:0,centerZ:0};
     ui.zoom.textContent='100%';ui.lite.setAttribute('aria-pressed',String(lite()));
     perf={samples:0,elapsed:0,frameMs:0,drawMs:0,avgDrawMs:0,actualFps:0,autoLite:false};
-    select(null);last=0;lastTouch=performance.now();sizing();if(!raf)raf=requestAnimationFrame(render);
+    select(null);last=0;lastTouch=performance.now();needsResize=true;sizing();if(!raf)raf=requestAnimationFrame(render);
     $('#rvstudio-close').focus();
   }
   function close(){
@@ -480,7 +539,7 @@
     ui.zoom.textContent=Math.round(cam.zoom*100)+'%';
     chosen=null;select(null);last=0;lastTouch=performance.now();
     perf={samples:0,elapsed:0,frameMs:0,drawMs:0,avgDrawMs:0,actualFps:0,autoLite:false};
-    sizing();raf=requestAnimationFrame(render);
+    needsResize=true;sizing();raf=requestAnimationFrame(render);
   }
   $('#rvstudio-close').addEventListener('click',close);
   $('#rvstudio-left').addEventListener('click',()=>{lastTouch=performance.now();cam.target=clamp(cam.target-.27,-1.25,1.25)});
@@ -503,7 +562,12 @@
   surface.addEventListener('pointermove',ev=>{if(!pointer||pointer.id!==ev.pointerId)return;
     const dx=ev.clientX-pointer.x,dy=ev.clientY-pointer.y;
     if(Math.abs(ev.clientX-pointer.mx)+Math.abs(ev.clientY-pointer.my)>8)drag=true;
-    if(drag){lastTouch=performance.now();cam.target=clamp(cam.target+dx*.008,-1.25,1.25);cam.pitch=clamp(cam.pitch+dy*.003,.30,.72);}
+    if(drag){
+      lastTouch=performance.now();
+      cam.target=clamp(cam.target+dx*(mobile()?.011:.008),-1.25,1.25);
+      cam.pitch=clamp(cam.pitch+dy*.003,.30,.72);
+      if(ev.pointerType==='touch'||ev.pointerType==='pen')cam.yaw=cam.target;
+    }
     pointer.x=ev.clientX;pointer.y=ev.clientY;
   });
   surface.addEventListener('pointerup',ev=>{if(!pointer||pointer.id!==ev.pointerId)return;
