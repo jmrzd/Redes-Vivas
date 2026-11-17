@@ -47,6 +47,22 @@ A prévia acompanha **a Cena 3D padrão e o explorador em tela cheia**, mantendo
 
 ![Montagem da página web acima da rede 3D no celular](assets/preview-mobile.webp)
 
+## Equipe de desenvolvimento
+
+Integrantes exibidos na aba **Início** do simulador, nesta ordem:
+
+1. João Miguel Silva de Rezende
+2. Keven Figueiral
+3. Wendell Jeronimo
+4. Luiz Eduardo Moreira da Silva
+5. Kauã Alves Charles Rocha
+6. João Pedro Santos e Silva
+7. Matheus Leal
+8. Adriell Procopio dos Santos
+9. Ibson Gabriel
+
+Os nomes são configurados em `js/config.js`, na propriedade `integrantes`. A interface lê essa lista automaticamente e se adapta às telas menores.
+
 ## Sobre
 
 **Redes Vivas** é um simulador educacional de **Introdução à Rede de Computadores**, criado para facilitar a compreensão de protocolos, equipamentos, tráfego, segurança e desempenho. O usuário pode acompanhar pacotes passando pela rede, alterar parâmetros, avançar os eventos passo a passo e resolver desafios.
