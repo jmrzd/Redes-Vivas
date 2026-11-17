@@ -302,10 +302,10 @@
     const selected=Number.isInteger(E?.sel)?E.sel:-1;
     const cw=mobile()?W*.41:Math.min(210,W*.25);
     const gap=mobile()?8:Math.min(44,W*.09);
-    const blockH=mobile()?35:Math.min(43,H*.075);
+    const blockH=mobile()?Math.min(35,Math.max(19,(H-130)/7-5)):Math.min(43,H*.075);
     const total=7*(blockH+5);
     const left=W/2-gap/2-cw,right=W/2+gap/2;
-    const top=Math.max(mobile()?85:74,(H-total)/2);
+    const top=Math.max(mobile()?52:74,(H-total)/2);
     ctx.save();ctx.textBaseline='middle';ctx.textAlign='center';
     for(let side=0;side<2;side++){
       const x=side?right:left;
