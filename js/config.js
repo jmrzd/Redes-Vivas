@@ -1,6 +1,6 @@
 /* ==========================================================================
    CONFIGURAÇÃO DO GRUPO — edite só este bloco e salve o arquivo.
-   Troque os nomes abaixo pelos nomes dos integrantes (de 5 a 8 pessoas).
+   Equipe do projeto: nomes exibidos automaticamente na aba Início.
    ========================================================================== */
 window.REDES_VIVAS = {
   projeto: "Redes Vivas",
@@ -11,11 +11,15 @@ window.REDES_VIVAS = {
   turma: "",                // opcional: turma ou período
   apresentacao: "18/11",
   integrantes: [
-    "Integrante 1",
-    "Integrante 2",
-    "Integrante 3",
-    "Integrante 4",
-    "Integrante 5"
+    "João Miguel Silva de Rezende",
+    "Keven Figueiral",
+    "Wendell Jeronimo",
+    "Luiz Eduardo Moreira da Silva",
+    "Kauã Alves Charles Rocha",
+    "João Pedro Santos e Silva",
+    "Matheus Leal",
+    "Adriell Procopio dos Santos",
+    "Ibson Gabriel"
   ],
   // Tema ao abrir: "auto" (segue o computador), "claro" ou "escuro".
   tema: "escuro",
