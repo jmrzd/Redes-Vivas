@@ -41,12 +41,21 @@
   const webPreview=document.createElement('div');
   webPreview.className='rv-web-preview';
   webPreview.hidden=true;
-  webPreview.innerHTML=`<div class="rv-web-bar"><span class="rv-web-dots">● ● ●</span><span class="rv-web-url"></span></div>
-    <div class="rv-web-status"></div><div class="rv-web-page">
-      <div class="rv-web-part rv-web-header" data-part="1"></div>
-      <div class="rv-web-part rv-web-picture" data-part="2"></div>
-      <div class="rv-web-part rv-web-copy" data-part="3"></div>
-      <div class="rv-web-part rv-web-action" data-part="4"></div>
+  // The original simulator constructs the page from four arriving HTTP pieces.
+  // Mirror that state in the *visible* 3D stage: do not invent packet delivery.
+  webPreview.setAttribute('aria-label','Página web montada progressivamente com os pacotes HTTP');
+  webPreview.innerHTML=`<div class="rv-web-address"><span class="rv-web-url" aria-label="Endereço digitado"></span></div>
+    <div class="rv-web-status" aria-live="polite"></div>
+    <div class="rv-web-page">
+      <div class="rv-web-part rv-web-header" data-part="1"><span class="rv-web-site-name"></span></div>
+      <div class="rv-web-part rv-web-picture" data-part="2" aria-label="Imagem recebida">
+        <span class="rv-web-sun"></span><span class="rv-web-mountain rv-web-mountain-one"></span>
+        <span class="rv-web-mountain rv-web-mountain-two"></span>
+      </div>
+      <div class="rv-web-part rv-web-copy" data-part="3" aria-label="Texto recebido"><span class="rv-web-lines">
+        <i></i><i></i><i></i><i></i><i></i><i></i><i></i>
+      </span></div>
+      <div class="rv-web-part rv-web-action" data-part="4" aria-label="Botão recebido"><span class="rv-web-cta"></span></div>
     </div>`;
   inline.append(webPreview);
   const inlineCanvas=inline.querySelector('canvas');
@@ -381,21 +390,28 @@
   }
   let lastWebKey='';
   function webBrowser(){
-    const visible=inlineMode&&lab?.aba?.id==='pagina-web';
+    const visible=!!lab&&lab.aba?.id==='pagina-web';
     if(webPreview.hidden===visible)webPreview.hidden=!visible;
     if(!visible){lastWebKey='';return;}
-    const E=lab.cena.E||{};
-    const site=lab.cena.P?.site||'www.exemplo.com.br';
-    const key=[site,E.digitado,E.status,E.montada,E.falha,...[1,2,3,4].map(i=>!!E.pedacos?.[i])].join('|');
-    if(key===lastWebKey)return;lastWebKey=key;
-    webPreview.querySelector('.rv-web-url').textContent=site.slice(0,E.digitado||0)||'Digite um endereço...';
-    webPreview.querySelector('.rv-web-status').textContent=E.status||'Aguardando o navegador';
-    for(let i=1;i<=4;i++){
-      const el=webPreview.querySelector('[data-part="'+i+'"]');
-      const received=!!E.pedacos?.[i];el.classList.toggle('received',received);
-      el.textContent=received?['',site.replace(/^www\\./,''),'◈','Texto da página carregado','Explorar →'][i]:('Parte '+i+' aguardando');
-    }
+    const E=lab.cena.E||{}, site=lab.cena.P?.site||'www.exemplo.com.br';
+    const received=Array.from({length:4},(_,i)=>!!E.pedacos?.[i+1]);
+    // Quantize the assembly progress so transitions are smooth without 60 DOM layouts/s.
+    const assembly=Math.round(clamp(E.montada||0,0,1)*12)/12;
+    const key=[site,E.digitado,E.status,E.falha,E.digitando,assembly,...received].join('|');
+    if(key===lastWebKey)return;
+    lastWebKey=key;
+    const written=site.slice(0,clamp(E.digitado||0,0,site.length));
+    webPreview.querySelector('.rv-web-url').textContent=written||'Digite um endereço...';
+    webPreview.querySelector('.rv-web-status').textContent=E.status||(E.digitando?'Digitando endereço...':'Navegador de Ana');
+    webPreview.querySelector('.rv-web-site-name').textContent=site.replace(/^www\./,'');
+    received.forEach((hasPiece,i)=>{
+      const part=webPreview.querySelector('[data-part="'+(i+1)+'"]');
+      part.classList.toggle('received',hasPiece);
+      part.setAttribute('aria-label',`Parte ${i+1} ${hasPiece?'recebida':'aguardando'}`);
+    });
     webPreview.classList.toggle('has-error',!!E.falha);
+    webPreview.classList.toggle('assembled',assembly>=1);
+    webPreview.style.setProperty('--rv-web-gap',(4*(1-assembly)).toFixed(1)+'px');
   }
   function packets(){
     const scene=lab.cena;
@@ -457,6 +473,7 @@
       packets();
       mediaLabels();
     }
+    webBrowser();
     const status=lab.relogio?'SIMULAÇÃO ATIVA':'SIMULAÇÃO PAUSADA';
     const packetCount=lab.aba?.id==='camadas'?'7 CAMADAS OSI':lab.cena.pacotes.filter(pk=>pk.vivo).length+' PACOTES';
     // Avoid DOM writes on every frame: on iOS they can force Canvas reflow.
@@ -500,6 +517,8 @@
   function open(l){
     if(!l||!l.cena)return;
     if(inlineMode){inline.hidden=true;inlineMode=false;}
+    $('.rvstudio-stage').append(webPreview);
+    lastWebKey='';webPreview.hidden=true;
     cv=modalCanvas;ctx=cv.getContext('2d',{alpha:false});ui=modalUi;
     previousFocus=document.activeElement;lab=l;chosen=null;
     ui.name.textContent=(l.aba?.titulo||l.def?.titulo||'Laboratório interativo')+(realNodes().length?'':' · representação ilustrativa');
@@ -507,7 +526,7 @@
     cam={yaw:innerWidth<650?.08:.54,target:innerWidth<650?.08:.54,pitch:.55,zoom:1,centerX:0,centerZ:0};
     ui.zoom.textContent='100%';ui.lite.setAttribute('aria-pressed',String(lite()));
     perf={samples:0,elapsed:0,frameMs:0,drawMs:0,avgDrawMs:0,actualFps:0,autoLite:false};
-    select(null);last=0;lastTouch=performance.now();needsResize=true;sizing();if(!raf)raf=requestAnimationFrame(render);
+    select(null);last=0;lastTouch=performance.now();needsResize=true;sizing();webBrowser();if(!raf)raf=requestAnimationFrame(render);
     $('#rvstudio-close').focus();
   }
   function close(){
@@ -519,7 +538,7 @@
   function showInline(l){
     // Called when a tab or the 3D / diagram toggle changes.
     if(!modal.hidden){inlineLab=l;return;}
-    if(inline.parentElement){inline.parentElement.classList.remove('rv3d-immersive');}
+    if(inline.parentElement){inline.parentElement.classList.remove('rv3d-immersive','rv-web-scene');}
     inline.hidden=true;inlineMode=false;inlineLab=null;
     if(raf){cancelAnimationFrame(raf);raf=0;}
     lab=null;
@@ -527,7 +546,11 @@
     const previousLab=inlineLab;
     inlineLab=l;lab=l;
     inline.classList.toggle('rv-layers',l.aba?.id==='camadas');
+    inline.classList.toggle('rv-web-lab',l.aba?.id==='pagina-web');
+    inline.append(webPreview);
+    lastWebKey='';webPreview.hidden=true;
     l.elMoldura.append(inline);l.elMoldura.classList.add('rv3d-immersive');
+    l.elMoldura.classList.toggle('rv-web-scene',l.aba?.id==='pagina-web');
     inline.hidden=false;inlineMode=true;
     cv=inlineCanvas;ctx=cv.getContext('2d',{alpha:false});ui=inlineUi;
     // Camera belongs to this scene. Carrying 225% zoom to another module
@@ -539,7 +562,7 @@
     ui.zoom.textContent=Math.round(cam.zoom*100)+'%';
     chosen=null;select(null);last=0;lastTouch=performance.now();
     perf={samples:0,elapsed:0,frameMs:0,drawMs:0,avgDrawMs:0,actualFps:0,autoLite:false};
-    needsResize=true;sizing();raf=requestAnimationFrame(render);
+    needsResize=true;sizing();webBrowser();raf=requestAnimationFrame(render);
   }
   $('#rvstudio-close').addEventListener('click',close);
   $('#rvstudio-left').addEventListener('click',()=>{lastTouch=performance.now();cam.target=clamp(cam.target-.27,-1.25,1.25)});

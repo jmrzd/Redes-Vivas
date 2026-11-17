@@ -371,22 +371,73 @@ body.rvstudio-active {overflow:hidden;}
 /* Keep mobile 3D objects unobstructed by the inspector placeholder. */
 .rvstudio-inline-device:not(.is-selected){display:none;}
 @media(max-width:760px){.rvstudio-inline-device.is-selected{top:69px;bottom:auto;left:7px;right:7px;max-width:none;}}
-/* Browser reconstruction remains visible while the 3D network transmits its real packets. */
+/* Page assembly from the original diagram, shown directly in the 3D scene. */
 .rv-web-preview[hidden]{display:none!important}
-.rv-web-preview{position:absolute;z-index:3;top:48px;left:10px;width:min(33%,290px);min-width:185px;max-height:42%;overflow:hidden;pointer-events:none;border:1px solid #2487b7;border-radius:10px;background:rgba(7,22,40,.94);box-shadow:0 8px 30px #0006;color:#d8f5ff;font:11px/1.3 system-ui,sans-serif}
-.rv-web-bar{display:flex;align-items:center;gap:8px;padding:7px 9px;background:#102f4a;border-bottom:1px solid #285d7c;min-width:0}
-.rv-web-dots{color:#43bce2;white-space:nowrap;font-size:9px}
-.rv-web-url{overflow:hidden;text-overflow:ellipsis;white-space:nowrap;font:10px ui-monospace,monospace}
-.rv-web-status{padding:5px 9px;color:#a6d3e8;font-size:10px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
-.rv-web-page{padding:6px;display:grid;grid-template-columns:1fr 1fr;grid-template-rows:28px 43px 28px;gap:4px}
-.rv-web-part{border:1px dashed #327799;border-radius:5px;background:#0b2135;color:#78a3b8;display:flex;align-items:center;justify-content:center;text-align:center;padding:3px;font-size:9px;overflow:hidden}
-.rv-web-part.received{border-style:solid;border-color:#40e3c4;background:#14425a;color:#e9fcff}
-.rv-web-header{grid-column:1/3;background:#103854}
-.rv-web-picture{grid-row:2/4;font-size:21px!important}
-.rv-web-action.received{background:#167c88}
-.rv-web-preview.has-error{border-color:#f66d7b}
-@media(max-width:760px){.rv-web-preview{top:65px;left:6px;width:min(53%,205px);min-width:130px;max-height:32%}.rv-web-page{grid-template-rows:22px 30px 22px;gap:2px}.rv-web-status{font-size:9px}.rv-web-part{font-size:8px}}
-@media(max-width:370px){.rv-web-preview{top:64px;width:46%;min-width:120px}.rv-web-dots{display:none}.rv-web-bar{padding:4px}.rv-web-status{padding:4px}}
+.rv-web-preview{
+  --rv-web-gap:4px;position:absolute;z-index:4;top:48px;left:10px;
+  width:min(33%,310px);min-width:205px;max-width:calc(100% - 22px);
+  pointer-events:none;overflow:hidden;padding:6px;border:1px solid #2a99d0;
+  border-radius:10px;background:rgba(8,27,47,.97);color:#e9f8ff;
+  box-shadow:0 8px 30px #0005;font:11px/1.35 var(--f-body);
+}
+.rv-web-address{min-height:22px;border:1px solid #36a4dd;border-radius:14px;
+  background:#0b2a45;padding:3px 9px;display:flex;align-items:center;min-width:0;}
+.rv-web-url{overflow:hidden;text-overflow:ellipsis;white-space:nowrap;font:600 10px var(--f-mono);}
+.rv-web-status{padding:4px 3px 5px;font-size:10px;line-height:1.2;min-height:21px;
+  color:#a0c5df;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;}
+.rv-web-preview.assembled .rv-web-status{color:#5cffa9;}
+.rv-web-preview.has-error{border-color:#fa7185;}
+.rv-web-preview.has-error .rv-web-status{color:#ff9cac;}
+.rv-web-page{display:grid;grid-template-columns:42% minmax(0,1fr);
+  grid-template-rows:52px 74px 28px;gap:var(--rv-web-gap);min-width:0;}
+.rv-web-part{position:relative;min-width:0;overflow:hidden;border:1px dashed #346e94;
+  border-radius:4px;background:#10283e;color:#739bb5;}
+.rv-web-part:not(.received)::before{content:'';position:absolute;inset:0;background:#0e253c;}
+.rv-web-part.received{border-color:transparent;border-style:solid;}
+.rv-web-header{grid-column:1/3;display:flex;align-items:center;padding:8px;
+  font-weight:700;color:white;background:#142e47;}
+.rv-web-header.received{background:#2bacec;}
+.rv-web-site-name{white-space:nowrap;overflow:hidden;text-overflow:ellipsis;font-size:11px;}
+.rv-web-picture{grid-row:2/4;background:#112e42;}
+.rv-web-picture.received{background:#37d79b;}
+.rv-web-sun{position:absolute;width:23%;aspect-ratio:1;border-radius:50%;
+  background:#dcf9e8;right:16%;top:18%;opacity:0;}
+.rv-web-mountain{position:absolute;width:0;height:0;border-style:solid;opacity:0;
+  border-left:42px solid transparent;border-right:42px solid transparent;
+  border-bottom:85px solid #e8fff0;bottom:0;left:-9%;max-width:100%;}
+.rv-web-mountain-two{border-left-width:26px;border-right-width:26px;
+  border-bottom-width:55px;left:44%;border-bottom-color:#bff3d7;}
+.rv-web-picture.received .rv-web-sun,.rv-web-picture.received .rv-web-mountain{opacity:1;}
+.rv-web-copy{grid-column:2;grid-row:2;background:#10273c;padding:6px;}
+.rv-web-lines{display:grid;gap:5px;opacity:0;}
+.rv-web-lines i{height:3px;background:#8daec9;display:block;}
+.rv-web-lines i:nth-child(6){width:92%;}.rv-web-lines i:nth-child(7){width:55%;}
+.rv-web-copy.received .rv-web-lines{opacity:1;}
+.rv-web-action{grid-column:2;grid-row:3;background:#10273c;padding:7px 6px;}
+.rv-web-cta{display:block;width:55%;height:13px;border-radius:4px;background:#14c4e4;opacity:0;}
+.rv-web-action.received .rv-web-cta{opacity:1;}
+@media(max-width:760px){
+  .rv-web-preview{left:7px;top:64px;width:clamp(143px,48%,208px);min-width:0;
+    border-radius:8px;padding:4px;box-shadow:0 4px 12px #0004;}
+  .rv-web-address{min-height:20px;padding:3px 6px;}.rv-web-status{font-size:9px;min-height:17px;padding:3px 2px;}
+  .rv-web-page{grid-template-rows:34px 47px 20px;}
+  .rv-web-header{padding:4px;}.rv-web-site-name{font-size:9px;}
+  .rv-web-copy{padding:3px;}.rv-web-lines{gap:3px;}.rv-web-lines i{height:2px;}
+  .rv-web-action{padding:4px;}.rv-web-cta{height:9px;}
+  .rv-web-mountain{transform:scale(.64);transform-origin:left bottom;}
+}
+/* The mobile page preview uses its own upper region so it never obscures PC/switch clicks. */
+@media(max-width:760px){
+  .moldura.rv-web-scene{min-height:570px;}
+  .rvstudio-inline.rv-web-lab .rvstudio-inline-canvas{
+    position:absolute;left:0;top:202px;width:100%;height:calc(100% - 265px);
+  }
+  .rvstudio-inline.rv-web-lab .rv-web-preview{
+    top:47px;left:10px;width:min(220px,calc(100% - 20px));
+  }
+}
+@media(max-width:370px){.rvstudio-inline.rv-web-lab .rv-web-preview{width:min(198px,calc(100% - 20px));}}
+
 
 /* On narrow viewports the status badge covered the OSI lesson headings.
    The original lab status above the stage remains visible. */

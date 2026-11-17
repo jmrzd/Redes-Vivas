@@ -28,6 +28,25 @@
 
 ![Explorador 3D com composição adaptada para smartphone](assets/preview-studio-mobile.webp)
 
+## Montagem de página web dentro do laboratório 3D
+
+O módulo **04 — Página web** reproduz visualmente, na área superior esquerda da cena, o **navegador do simulador original**. A construção é vinculada aos mesmos passos de DNS, TCP e HTTP do motor educativo (não é uma página externa real):
+
+1. **Digitando:** a barra de endereço mostra o texto sendo digitado e o estado da conexão.
+2. **Recebendo:** os quatro pacotes HTTP preenchem, **na ordem em que chegam**, o cabeçalho azul, a imagem verde, as linhas de texto e o botão ciano.
+3. **Concluído:** as quatro partes se aproximam e a mensagem `Pronto: página carregada` aparece ao final.
+4. **Falhas de rede:** a mensagem do navegador e as partes recebidas refletem erros de DNS ou perdas/retransmissões, sem simular uma entrega inexistente.
+
+A prévia acompanha **a Cena 3D padrão e o explorador em tela cheia**, mantendo todos os controles e equipamentos. O modo **Diagrama** continua disponível com o desenho tradicional. Em telas menores, a página ocupa a parte superior e a rede 3D a parte inferior do palco, evitando que o navegador cubra computadores ou roteadores. O visual usa somente HTML/CSS e o estado do motor em JavaScript, sem requisições externas, vídeos, bibliotecas ou texturas pesadas.
+
+**Arquivos responsáveis:** `js/studio3d.js` (ligação ao estado `E.digitado`, `E.status`, `E.pedacos`, `E.montada` e `E.falha`) e `css/netverse.css` (composição e responsividade). Confira também [`CHANGELOG.md`](CHANGELOG.md).
+
+**Comparação com a versão clássica:**
+
+![Montagem da página web na cena 3D em desktop](assets/preview-laboratorio.webp)
+
+![Montagem da página web acima da rede 3D no celular](assets/preview-mobile.webp)
+
 ## Sobre
 
 **Redes Vivas** é um simulador educacional de **Introdução à Rede de Computadores**, criado para facilitar a compreensão de protocolos, equipamentos, tráfego, segurança e desempenho. O usuário pode acompanhar pacotes passando pela rede, alterar parâmetros, avançar os eventos passo a passo e resolver desafios.
