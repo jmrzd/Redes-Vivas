@@ -234,3 +234,20 @@ Tudo é desenhado com Canvas 2D e CSS nativo, sem dependências adicionais. A l�
 - Em telas pequenas, a cena utiliza escala de pixels limitada e simplifica temporariamente brilhos e grades durante o arrasto.
 - A rotação automática fica desativada no celular e a interface deixa de reescrever indicadores inalterados a cada quadro.
 - Simulações, equipamentos 3D, inspeção por toque, controles e modo leve foram preservados.
+
+
+## Layout móvel refinado (16/11/2026)
+
+- **Abertura:** composição exclusiva em telas estreitas, separando os cinco equipamentos em duas fileiras isométricas para evitar sobreposições; textos, etiquetas e botões reordenados para uso com os dedos.
+- **Laboratório Página web:** espaço vertical maior para a página montada e os nós 3D não disputarem a mesma área; controles de câmera compactos.
+- **Desktop preservado:** modificações de posicionamento e CSS móveis condicionadas à largura da tela.
+- **Desempenho:** o projeto continua em Canvas 2D com os controles de qualidade existentes; não foram adicionadas dependências.
+
+
+### Prévias reais do layout de celular
+
+| Abertura em celular | Simulação da Página Web no celular |
+| :-- | :-- |
+| ![Abertura mobile com equipamentos separados](assets/preview-intro-mobile.webp) | ![Página Web mobile com duas linhas de equipamentos](assets/preview-web-mobile.webp) |
+
+**Validação:** navegação pelas 12 abas e verificação de erros de JavaScript e rolagem horizontal em 320×568, 375×667, 390×744, 430×932, 768×1024 e 1440×900, usando Chromium automatizado. O desempenho no Safari físico pode variar.

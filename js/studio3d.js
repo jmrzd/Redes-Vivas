@@ -83,12 +83,15 @@
   }
   function captureTopology(){
     frameNodes=sceneNodes();framePositions.clear();
-    const cols=frameNodes.length>7?3:2,rows=Math.ceil(frameNodes.length/cols);
     const vertical=mobile();
+    // On phones, six devices fit better in two wide rows than three
+    // crowded two-column rows (which overlapped tall server racks).
+    const cols=vertical && frameNodes.length>=5?3:frameNodes.length>7?3:2;
+    const rows=Math.ceil(frameNodes.length/cols);
     let x0=Infinity,x1=-Infinity,z0=Infinity,z1=-Infinity;
     frameNodes.forEach((n,i)=>{
       const p=vertical
-        ?{x:((i%cols)-(cols-1)/2)*(cols===3?2.25:2.9),z:(Math.floor(i/cols)-(rows-1)/2)*3.35}
+        ?{x:((i%cols)-(cols-1)/2)*(cols===3?3.05:2.9),z:(Math.floor(i/cols)-(rows-1)/2)*(cols===3?4.3:3.35)}
         :{x:((Number.isFinite(n.fx)?n.fx:.5)-.5)*7-((Number.isFinite(n.fy)?n.fy:.5)-.5)*1.4,
           z:((Number.isFinite(n.fy)?n.fy:.5)-.5)*4};
       framePositions.set(n,p);
@@ -279,7 +282,7 @@
     const clickCenter=proj(x,id==='servidor'?.75:.38,z);
     hotspots.push({n,x:clickCenter.x,y:clickCenter.y,rad:Math.max(32,base.s*.66)});
     const label=proj(x,-.34,z);
-    ctx.save();ctx.textAlign='center';ctx.textBaseline='top';ctx.font=`${mobile()?'600 10px':'600 12px'} system-ui,sans-serif`;
+    ctx.save();ctx.textAlign='center';ctx.textBaseline='top';ctx.font=`${mobile()?(W<355?'600 9px':'600 10px'):'600 12px'} system-ui,sans-serif`;
     const txt=n.rotulo||id;const w=Math.min(ctx.measureText(txt).width+18,mobile()?105:158);
     ctx.fillStyle='rgba(4,13,26,.89)';ctx.strokeStyle=rgba(tint,.55);
     ctx.beginPath();ctx.roundRect(label.x-w/2,label.y+9,w,21,7);ctx.fill();ctx.stroke();

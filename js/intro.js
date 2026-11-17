@@ -26,19 +26,39 @@
     { id:'web', name:'Servidor Web', ip:'203.0.113.10', type:'server', x:2.65, z:.8, tint:'#38f5a5', detail:'O servidor entrega os dados da página solicitada.' }
   ];
   const connections = [[0,1],[1,2],[2,3],[2,4]];
+  // Portrait layout is independent from the desktop composition. Put DNS and
+  // Web in a rear row and keep laptop/switch/router in a clear foreground row.
+  const desktopPositions = deviceNodes.map(n => ({x:n.x,z:n.z}));
+  const portraitPositions = [
+    [-3.0,1.24],[0,1.24],[3.0,1.24],[-1.65,-1.33],[1.65,-1.33]
+  ];
+  let lastPortraitLayout=null;
+  function arrangeDevices(){
+    const portrait=mobile();
+    if(portrait===lastPortraitLayout)return;
+    deviceNodes.forEach((n,i)=>{
+      n.x=portrait?portraitPositions[i][0]:desktopPositions[i].x;
+      n.z=portrait?portraitPositions[i][1]:desktopPositions[i].z;
+    });
+    lastPortraitLayout=portrait;
+    baseYaw=portrait?.10:.37; yaw=baseYaw;
+    wantedTilt=portrait?.55:.42; tilt=wantedTilt;
+    zoom=1;
+  }
   const TAU = Math.PI*2;
   const clamp = (n,a,b) => Math.max(a, Math.min(b,n));
   let W=0,H=0,dpr=1,scale=90,raf=0,last=0, running=true;
   let yaw=.37, baseYaw=.37, tilt=.42, wantedTilt=.42, zoom=1;
   let pan=0, pointer=null, dragged=false, selected=-1, lite=false, elapsed=0, hits=[];
-  const mobile = () => mqMobile.matches;
+  const mobile = () => mqMobile.matches && window.innerHeight >= window.innerWidth;
   const reduced = () => prefersReduced || lite;
   function rgba(hex,alpha) {
     const a=parseInt(hex.slice(1),16);
     return `rgba(${a>>16},${(a>>8)&255},${a&255},${alpha})`;
   }
   function resize() {
-    W=Math.max(300,canvas.clientWidth); H=Math.max(300,canvas.clientHeight);
+    W=Math.max(280,canvas.clientWidth); H=Math.max(300,canvas.clientHeight);
+    arrangeDevices();
     dpr=Math.min(devicePixelRatio||1,lite ? 1 : mobile()?1.25:1.65);
     // Setting canvas.width or height ALWAYS clears the drawing. Wheel zoom
     // previously called resize() for every wheel event, so fast scrolling
@@ -48,14 +68,16 @@
       canvas.width=pixelW;canvas.height=pixelH;
     }
     ctx.setTransform(dpr,0,0,dpr,0,0);
-    scale=Math.min(mobile()?W/5.65:W/10.2,H/(mobile()?7.8:5.9),mobile()?76:145)*zoom;
+    // Keep the entire five-node scene inside the phone viewport. The
+    // desktop renderer uses its original scale and framing without changes.
+    scale=Math.min(mobile()?W/7.9:W/10.2,H/(mobile()?10.2:5.9),mobile()?60:145)*zoom;
   }
   function proj(x,y,z) {
     const sy=Math.sin(yaw),cy=Math.cos(yaw),rx=x*cy-z*sy,rz=x*sy+z*cy;
     const persp=1/(1+rz*.043);
-    const sc=scale*persp*(mobile()?.80:1);
-    return {x:W*(mobile()?.53:.73)+rx*sc,
-      y:H*(mobile()?.69:.705)+rz*sc*tilt-y*sc*.99,
+    const sc=scale*persp*(mobile()?.94:1);
+    return {x:W*(mobile()?.50:.73)+rx*sc,
+      y:H*(mobile()?.78:.705)+rz*sc*tilt*(mobile()?1.66:1)-y*sc*.99,
       s:sc, depth:rz};
   }
   function polygon(coords,top,bottom,stroke='#25465f',lineWidth=.9) {
@@ -245,12 +267,13 @@
   function drawLabels(n) {
     const index=deviceNodes.indexOf(n),p=proj(n.x,.05,n.z),top=proj(n.x,n.type==='server'?1.6:1.1,n.z);
     const isMob=mobile();
-    const w=isMob?Math.max(57,Math.min(83,n.name.length*5.4)):Math.max(112,n.name.length*8.6);
-    const h=isMob?22:34,x=p.x-w/2,y=p.y+(isMob?7:13);
+    ctx.font=isMob?'650 10.5px system-ui':'600 12px system-ui';
+    const w=isMob?Math.max(66,Math.min(110,ctx.measureText(n.name).width+17)):Math.max(112,n.name.length*8.6);
+    const h=isMob?24:34,x=p.x-w/2,y=p.y+(isMob?8:13);
     ctx.fillStyle='rgba(5,14,30,.92)';ctx.strokeStyle=rgba(n.tint,selected===index?.95:.48);ctx.lineWidth=1;
     ctx.beginPath();ctx.roundRect(x,y,w,h,7);ctx.fill();ctx.stroke();
-    ctx.textAlign='center';ctx.textBaseline='top';ctx.fillStyle='#e8f8ff';ctx.font=`600 ${isMob?'9':'12'}px system-ui`;
-    ctx.fillText(n.name,p.x,y+(isMob?7:6));
+    ctx.textAlign='center';ctx.textBaseline='top';ctx.fillStyle='#e8f8ff';ctx.font=`650 ${isMob?'10.5':'12'}px system-ui`;
+    ctx.fillText(n.name,p.x,y+(isMob?6:6));
     if(!isMob){ctx.font='10px ui-monospace, monospace';ctx.fillStyle='#91aac7';ctx.fillText(n.ip,p.x,y+21);}
     hits.push({index,x:top.x,y:top.y+(p.y-top.y)*.4,r:Math.max(27,p.s*.7)});
   }
@@ -261,7 +284,7 @@
     if(last && delta<(mobile()?29:19)){raf=requestAnimationFrame(drawScene);return;}
     elapsed+=clamp(delta,0,80);last=ms;
     // Gentle continuous camera motion; gestures suspend auto orbit.
-    const drift=pointer||reduced()?0:Math.sin(elapsed*.00023)*.10;
+    const drift=pointer||reduced()||mobile()?0:Math.sin(elapsed*.00023)*.10;
     yaw+=(baseYaw+drift-yaw)*.055;
     tilt+=(wantedTilt-tilt)*.055;
     ctx.setTransform(dpr,0,0,dpr,0,0);
@@ -276,8 +299,9 @@
       else if(n.type==='laptop')drawLaptop(n,bob);
       else if(n.type==='switch')drawSwitch(n,bob);
       else drawRouter(n,bob);
-      drawLabels(n);
     }
+    // Draw labels after geometry so a rear server never covers a name pill.
+    for(const n of sorted)drawLabels(n);
     raf=requestAnimationFrame(drawScene);
   }
   function leave(module,autoplay=false) {
@@ -296,7 +320,7 @@
     if(!pointer)return;
     const dx=e.clientX-pointer.x,dy=e.clientY-pointer.y;
     if(Math.abs(dx)+Math.abs(dy)>5)dragged=true;
-    if(dragged){baseYaw=clamp(pointer.yaw+dx*.0045,-.87,.87);wantedTilt=clamp(pointer.tilt+dy*.0018,.22,.62);}
+    if(dragged){baseYaw=clamp(pointer.yaw+dx*.0045,mobile()?-.58:-.87,mobile()?.58:.87);wantedTilt=clamp(pointer.tilt+dy*.0018,.30,.62);}
   }
   function onUp(e) {
     if(!pointer)return;

@@ -15,3 +15,8 @@
 ## Versões anteriores
 
 Consulte o histórico de commits para as etapas de abertura animada, projeção 3D dos dispositivos, camadas OSI isométricas, meios de transmissão, correções de zoom e otimização de arrasto no celular.
+
+### 16/11/2026 — Layout móvel dedicado
+- Separação visual dos nós 3D da abertura, sem alteração da cena de desktop.
+- Melhoria nos tamanhos das etiquetas e na legibilidade dos botões em aparelhos pequenos.
+- Ampliação da área 3D do módulo Página web para preservar a navegação e a montagem da página.

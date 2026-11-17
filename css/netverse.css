@@ -444,3 +444,114 @@ body.rvstudio-active {overflow:hidden;}
 @media(max-width:760px){
   .rvstudio-inline.rv-layers .rvstudio-inline-state{display:none}
 }
+
+
+/* 2026-11-16: real phone-first layout, without changing desktop presentation. */
+@media (max-width:750px){
+  .netverse-intro{height:100dvh;min-height:0;}
+  .intro-content{
+    top:max(38px,env(safe-area-inset-top, 0px));
+    left:50%;transform:translateX(-50%);padding:0 13px;
+    width:100%;max-width:480px;gap:0;text-align:center;align-items:center;
+  }
+  .intro-emblem{width:49px;height:49px;margin:0 0 3px;}
+  .intro-emblem svg{width:49px;height:49px;}
+  .intro-eyebrow{font-size:9px;letter-spacing:.13em;margin:3px 0 5px;}
+  .intro-content h1{font-size:clamp(31px,8.1vw,44px);letter-spacing:.027em;line-height:1.04;white-space:nowrap;}
+  .intro-content h1 span{display:inline;letter-spacing:.025em;}
+  .intro-sub{font-size:11px;letter-spacing:.105em;margin-top:8px;}
+  .intro-tagline{font-size:9px;letter-spacing:.08em;margin:7px 0 13px;line-height:1.4;}
+  .intro-actions{display:grid;grid-template-columns:minmax(0,1fr) minmax(0,1fr);
+    width:min(100%,350px);gap:7px;margin:auto;}
+  .intro-actions button{min-width:0;width:100%;min-height:42px;padding:8px 6px;
+    font-size:12px;line-height:1.2;white-space:normal;}
+  .intro-actions .intro-cta{grid-column:1 / -1;}
+  .intro-help{font-size:10px;line-height:1.4;max-width:340px;margin:9px auto 0;}
+  .intro-skip{top:max(8px,env(safe-area-inset-top,0px));right:10px;
+    padding:6px 8px;font-size:10px;}
+  .intro-skip span{margin-left:2px;}
+  .intro-telemetry{bottom:33px;right:12px;gap:2px;font-size:8px;max-width:64%;}
+  .intro-telemetry strong{font-size:9px;}
+  .intro-telemetry small{font-size:8px;}
+  .intro-device-info{bottom:87px;font-size:11px;max-width:90%;}
+  .intro-footer{bottom:11px;left:9px;right:9px;text-align:left;font-size:7px;max-width:93%;}
+  .intro-vignette{background:linear-gradient(to bottom,#020712 0%,rgba(2,7,18,.99) 22%,rgba(2,7,18,.72) 36%,transparent 57%);}
+  /* The page is allowed to scroll vertically; make controls concise. */
+  .rv3d-toolbar{display:grid;grid-template-columns:minmax(0,1fr) auto;gap:6px;padding:7px;}
+  .rv3d-indicator{display:none;}
+  .rv3d-open-studio{display:none;}
+  .rv3d-toolbar-info{display:none;}
+  .rv3d-view-buttons{margin-left:0;justify-content:flex-start;min-width:0;}
+  .rv3d-zoom-buttons{justify-content:flex-end;min-width:0;}
+  .rv3d-angle-value{min-width:73px;font-size:10px;}
+  .rv3d-toolbar button{min-height:39px;min-width:38px;}
+  .moldura.rv-web-scene{min-height:735px;}
+  .rvstudio-inline.rv-web-lab .rvstudio-inline-canvas{top:216px;height:calc(100% - 278px);}
+  .rvstudio-inline.rv-web-lab .rv-web-preview{top:42px;left:9px;width:min(220px,calc(100% - 18px));}
+  .rvstudio-inline-controls button{min-width:0;}
+  .rvstudio-inline-controls button[data-camera="reset"]{font-size:10px;}
+  .rvstudio-inline-controls{gap:3px;}
+  .rvstudio-inline-state{right:7px;top:7px;}
+}
+@media (max-width:750px) and (max-height:630px){
+  .intro-content{top:27px;}
+  .intro-emblem,.intro-emblem svg{width:36px;height:36px;}
+  .intro-eyebrow{font-size:8px;margin:2px 0;}
+  .intro-content h1{font-size:clamp(29px,7.8vw,37px);}
+  .intro-sub{font-size:9px;margin-top:5px;}
+  .intro-tagline{margin:4px 0 7px;font-size:8px;}
+  .intro-actions button{min-height:35px;font-size:10.5px;}
+  .intro-help{display:none;}
+  .intro-telemetry small{display:none;}
+  .intro-footer{display:none;}
+}
+@media (max-width:355px){
+  .intro-content h1{font-size:clamp(28px,8vw,34px);}
+  .intro-actions button{font-size:11px;}
+  .intro-telemetry{bottom:25px;}
+  .rv3d-toolbar{grid-template-columns:1fr;}
+  .rv3d-view-buttons,.rv3d-zoom-buttons{justify-content:center;}
+}
+
+@media(max-width:750px){
+  .intro-telemetry,.intro-footer{display:none;}
+  .intro-device-info{top:clamp(295px,45vh,355px);bottom:auto;line-height:1.35;}
+  .moldura.rv-web-scene{min-height:680px;}
+  .rvstudio-inline.rv-web-lab .rvstudio-inline-canvas{top:216px;height:calc(100% - 276px);}
+}
+
+/* Practical tap targets and the split layout for landscape phones. */
+@media(max-width:750px){
+  .intro-actions button{min-height:44px;}
+  .rv3d-toolbar button{min-height:44px;}
+  .rvstudio-inline-controls button{min-height:44px;}
+  .tr-botoes .btn{min-height:44px;}
+}
+@media(max-width:750px) and (orientation:landscape) and (max-height:500px){
+  .intro-content{left:4%;top:50%;transform:translateY(-50%);width:43%;max-width:none;
+    padding:0;align-items:flex-start;text-align:left;}
+  .intro-emblem{display:none;}
+  .intro-eyebrow{font-size:8px;letter-spacing:.08em;line-height:1.5;}
+  .intro-content h1{font-size:clamp(26px,4.8vw,40px);white-space:normal;line-height:1.03;}
+  .intro-sub{font-size:9px;margin-top:7px;text-align:left;}
+  .intro-tagline,.intro-help{display:none;}
+  .intro-actions{display:flex;flex-direction:column;gap:5px;width:90%;margin:10px 0 0;}
+  .intro-actions button{min-height:35px;padding:6px;font-size:10px;}
+  .intro-vignette{background:linear-gradient(to right,rgba(2,7,18,.9) 0%,rgba(2,7,18,.5) 45%,transparent 75%);}
+  .intro-telemetry,.intro-footer{display:none;}
+}
+/* Tablet-width phones in landscape need the same short-height treatment. */
+@media(max-width:950px) and (orientation:landscape) and (max-height:500px){
+  .intro-content{left:3.2%;top:50%;transform:translateY(-50%);width:40%;max-width:none;
+    padding:0;align-items:flex-start;text-align:left;}
+  .intro-emblem{display:none;}
+  .intro-eyebrow{font-size:8px;line-height:1.5;letter-spacing:.08em;margin:3px 0;}
+  .intro-content h1{font-size:clamp(25px,4.1vw,37px);line-height:1.05;white-space:nowrap;}
+  .intro-content h1 span{display:inline;}
+  .intro-sub{font-size:9px;margin:8px 0 0;}
+  .intro-tagline,.intro-help{display:none;}
+  .intro-actions{display:flex;flex-direction:column;width:88%;gap:5px;margin:10px 0 0;}
+  .intro-actions button{min-height:35px;padding:6px;font-size:10.5px;}
+  .intro-telemetry,.intro-footer{display:none;}
+  .intro-vignette{background:linear-gradient(to right,rgba(2,7,18,.92),rgba(2,7,18,.45) 45%,transparent 75%);}
+}
