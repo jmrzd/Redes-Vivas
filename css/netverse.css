@@ -555,3 +555,29 @@ body.rvstudio-active {overflow:hidden;}
   .intro-telemetry,.intro-footer{display:none;}
   .intro-vignette{background:linear-gradient(to right,rgba(2,7,18,.92),rgba(2,7,18,.45) 45%,transparent 75%);}
 }
+
+/* Optional native WebGL2 path: accelerated 3D models on mobile.
+   The overlay canvas remains responsible for labels and input; CSS is identical
+   to the original geometry to avoid mismatched tap targets. */
+.rvstudio-inline>.rvstudio-gpu-canvas,
+.rvstudio-stage>.rvstudio-gpu-canvas{
+  position:absolute;left:0;top:0;width:100%;height:100%;z-index:0;
+  pointer-events:none;display:block;touch-action:none;
+}
+.rvstudio-gpu-canvas[hidden]{display:none!important;}
+.rvstudio-inline>.rvstudio-inline-canvas,
+.rvstudio-stage>#rvstudio-canvas{position:relative;z-index:1;}
+.rvstudio-stage>#rvstudio-canvas{height:100%;}
+@media(max-width:760px){
+  .rvstudio-inline.rv-web-lab>.rvstudio-gpu-canvas{
+    top:216px;height:calc(100% - 276px);
+  }
+}
+
+.rvstudio-inline-head .rvstudio-render-toggle{
+  border:1px solid #37749b;background:#0a2b46;color:#98f1ff;
+  border-radius:6px;padding:4px 7px;font:800 9px var(--f-mono);
+  letter-spacing:.04em;min-height:27px;pointer-events:auto;cursor:pointer;
+}
+.rvstudio-inline-head .rvstudio-render-toggle[aria-pressed="false"]{color:#a2b6c6;border-color:#34506c;}
+@media(min-width:761px){.rvstudio-inline-head .rvstudio-render-toggle{display:none;}}

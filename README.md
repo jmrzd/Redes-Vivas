@@ -47,22 +47,6 @@ A prévia acompanha **a Cena 3D padrão e o explorador em tela cheia**, mantendo
 
 ![Montagem da página web acima da rede 3D no celular](assets/preview-mobile.webp)
 
-## Equipe de desenvolvimento
-
-Integrantes exibidos na aba **Início** do simulador, nesta ordem:
-
-1. João Miguel Silva de Rezende
-2. Keven Figueiral
-3. Wendell Jeronimo
-4. Luiz Eduardo Moreira da Silva
-5. Kauã Alves Charles Rocha
-6. João Pedro Santos e Silva
-7. Matheus Leal
-8. Adriell Procopio dos Santos
-9. Ibson Gabriel
-
-Os nomes são configurados em `js/config.js`, na propriedade `integrantes`. A interface lê essa lista automaticamente e se adapta às telas menores.
-
 ## Sobre
 
 **Redes Vivas** é um simulador educacional de **Introdução à Rede de Computadores**, criado para facilitar a compreensão de protocolos, equipamentos, tráfego, segurança e desempenho. O usuário pode acompanhar pacotes passando pela rede, alterar parâmetros, avançar os eventos passo a passo e resolver desafios.
@@ -267,3 +251,53 @@ Tudo é desenhado com Canvas 2D e CSS nativo, sem dependências adicionais. A l�
 | ![Abertura mobile com equipamentos separados](assets/preview-intro-mobile.webp) | ![Página Web mobile com duas linhas de equipamentos](assets/preview-web-mobile.webp) |
 
 **Validação:** navegação pelas 12 abas e verificação de erros de JavaScript e rolagem horizontal em 320×568, 375×667, 390×744, 430×932, 768×1024 e 1440×900, usando Chromium automatizado. O desempenho no Safari físico pode variar.
+
+## Equipe de desenvolvimento
+
+1. João Miguel Silva de Rezende
+2. Keven Figueiral
+3. Wendell Jeronimo
+4. Luiz Eduardo Moreira da Silva
+5. Kauã Alves Charles Rocha
+6. João Pedro Santos e Silva
+7. Matheus Leal
+8. Adriell Procopio dos Santos
+9. Ibson Gabriel
+
+Os nomes ficam em `js/config.js`.
+
+## Renderização acelerada opcional · novembro de 2026
+
+Esta revisão incorporou um **renderizador WebGL2 escrito para este projeto**, sem
+adicionar dependências externas. Inspirado nas soluções de desempenho observadas
+no projeto **[Netverse Redes Vivas](https://github.com/joaodorast/netverse-redes-vivas)**
+(React, Three.js, geometria procedural e qualidade adaptativa). Não foi
+transplantado código, modelo, textura ou asset daquele repositório: o código e
+os shaders WebGL presentes em `js/gpu3d.js` foram escritos especificamente
+para este projeto. O projeto de referência não apresenta licença geral de
+código; respeitamos essa limitação.
+
+**O que mudou:**
+
+- Em celulares compatíveis com WebGL2, a cena de equipamentos e pacotes usa a GPU
+  com geometria procedural 3D, malhas em lote e cache de posições/topologia.
+- Girar a câmera troca apenas os parâmetros do renderizador; não reconstrói
+  todos os equipamentos a cada movimento.
+- Qualidade (resolução) limitada no telefone para reduzir carga gráfica.
+- Gesto de dois dedos para aproximar/afastar, seleção de equipamentos e
+  desconexão de cabos continuam ligados ao simulador original.
+- Botão **GPU / 2D** no laboratório móvel: alterna imediatamente entre o
+  renderizador novo e o clássico. A preferência é lembrada localmente.
+- Sem WebGL2 ou em caso de falha, o desenho Canvas 2D antigo é mantido como
+  alternativa. A lição **Camadas OSI** segue com seu diagrama interativo 2D.
+- A versão de PC permanece visualmente igual à anterior.
+- Nenhuma das 12 simulações, experimentos, logs ou componentes acadêmicos foi
+  substituída.
+
+**Testes:** sintaxe de todos os JS e navegação nas 12 abas em Chromium em
+larguras 320 px, 390 px e 1440 px. O ambiente de navegador automatizado
+bloqueia a criação de contextos WebGL, portanto o caminho acelerado requer
+verificação visual e de fluidez em um aparelho real; não há promessa de FPS.
+
+**Recuperação:** branch Git `backup-estavel-antes-netverse-2026-11-18` contém o
+commit da versão original imediatamente anterior a esta integração.

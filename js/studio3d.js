@@ -27,7 +27,7 @@
   // One reusable inline canvas shared between laboratories: no second 3D engine.
   const inline=document.createElement('div');inline.className='rvstudio-inline';inline.hidden=true;
   inline.innerHTML=`<canvas class="rvstudio-inline-canvas" aria-label="Laboratório 3D interativo, arraste para girar e toque em equipamentos" tabindex="0"></canvas>
-    <div class="rvstudio-inline-head"><strong>REDE VIVA <em>3D</em></strong><span>ARRASTE PARA GIRAR · TOQUE NOS EQUIPAMENTOS</span></div>
+    <div class="rvstudio-inline-head"><strong>REDE VIVA <em>3D</em></strong><span>ARRASTE PARA GIRAR · TOQUE NOS EQUIPAMENTOS</span><button type="button" class="rvstudio-render-toggle" aria-label="Alternar entre 3D acelerado e desenho clássico" aria-pressed="true">GPU</button></div>
     <div class="rvstudio-inline-state"><span class="rvstudio-light"></span><span id="rvstudio-inline-state">PRONTO</span><span id="rvstudio-inline-packets">0 PACOTES</span></div>
     <div class="rvstudio-inline-device" aria-live="polite"><b>EXPLORADOR DE REDE</b><span>Clique em um equipamento para inspecionar.</span></div>
     <div class="rvstudio-inline-controls">
@@ -59,8 +59,77 @@
     </div>`;
   inline.append(webPreview);
   const inlineCanvas=inline.querySelector('canvas');
+  // Hardware-accelerated layer behind the existing transparent interaction canvas.
+  // The original Canvas 2D renderer remains as an instant fallback.
+  const inlineGPUCanvas=document.createElement('canvas');
+  inlineGPUCanvas.className='rvstudio-gpu-canvas';inlineGPUCanvas.hidden=true;
+  inlineGPUCanvas.setAttribute('aria-hidden','true');
+  inline.insertBefore(inlineGPUCanvas,inlineCanvas);
+  const modalGPUCanvas=document.createElement('canvas');
+  modalGPUCanvas.className='rvstudio-gpu-canvas';modalGPUCanvas.hidden=true;
+  modalGPUCanvas.setAttribute('aria-hidden','true');
+  modalCanvas.parentNode.insertBefore(modalGPUCanvas,modalCanvas);
+  const gpuInstances=new WeakMap();
+  let gpuFailed=false,lastGPU=false;
+  let gpuEnabled=true;
+  try{gpuEnabled=localStorage.getItem('rv-renderer-preference')!=='classic';}catch{}
+  const gpuToggle=inline.querySelector('.rvstudio-render-toggle');
+  function updateGpuToggle(){
+    gpuToggle.textContent=gpuEnabled&&!gpuFailed?'GPU':'2D';
+    gpuToggle.setAttribute('aria-pressed',String(gpuEnabled&&!gpuFailed));
+    gpuToggle.title=gpuEnabled&&!gpuFailed?'Usar desenho clássico':'Tentar 3D acelerado';
+  }
+  gpuToggle.addEventListener('click',()=>{
+    gpuEnabled=!gpuEnabled;gpuFailed=false;
+    try{localStorage.setItem('rv-renderer-preference',gpuEnabled?'gpu':'classic');}catch{}
+    updateGpuToggle();
+  });
+  updateGpuToggle();
+  function gpuForCurrent(){
+    const canvas=inlineMode?inlineGPUCanvas:modalGPUCanvas;
+    if(!gpuEnabled||gpuFailed||!window.RedesVivasGPU||!mobile()||lab?.aba?.id==='camadas'){
+      canvas.hidden=true;return null;
+    }
+    let gpu=gpuInstances.get(canvas);
+    if(gpu===undefined){
+      gpu=window.RedesVivasGPU.create(canvas);gpuInstances.set(canvas,gpu||null);
+    }
+    if(!gpu?.active){canvas.hidden=true;return null;}
+    canvas.hidden=false;return gpu;
+  }
+  function gpuSceneData(){
+    const ns=frameNodes;
+    const signature=lab.aba?.id+'|'+ns.map(n=>[n.id,n.tipo,n.fx,n.fy,n.desligado,n.cor].join(':')).join(';')+'|'+
+      lab.cena.cabos.map(c=>[c.a,c.b,c.cortado,c.estilo,c.disfarce].join(':')).join(';')+'|'+lastThemeSignature;
+    return {signature,nodes:ns,nodeMap:lab.cena.nos,hasRealNodes:realNodes().length>0,
+      locations:framePositions,cables:lab.cena.cabos,packets:lab.cena.pacotes,tint:tintOf};
+  }
+  function drawGpuLabels(){
+    hotspots=[];cableHits=[];
+    const nodes=frameNodes;
+    if(realNodes().length)for(const c of lab.cena.cabos){
+      const a=lab.cena.nos.get(c.a),b=lab.cena.nos.get(c.b);
+      if(a&&b&&!a.oculto&&!b.oculto){const A=pos(a),B=pos(b);
+        cableHits.push({c,a:proj(A.x,.035,A.z),b:proj(B.x,.035,B.z)});
+      }
+    }
+    for(const n of nodes){
+      const at=pos(n),tint=tintOf(n),center=proj(at.x,n.tipo==='servidor'?.82:.39,at.z);
+      hotspots.push({n,x:center.x,y:center.y,rad:Math.max(32,center.s*.69)});
+      const label=proj(at.x,-.34,at.z);
+      ctx.save();ctx.textAlign='center';ctx.textBaseline='top';
+      ctx.font=`600 ${W<355?9:10}px system-ui,sans-serif`;
+      const txt=n.rotulo||n.tipo,ww=Math.min(ctx.measureText(txt).width+18,105);
+      ctx.beginPath();ctx.roundRect(label.x-ww/2,label.y+9,ww,21,7);
+      ctx.fillStyle='rgba(4,13,26,.91)';ctx.fill();
+      ctx.strokeStyle='rgba(80,199,234,.58)';ctx.stroke();
+      ctx.fillStyle='#e4f7ff';ctx.fillText(txt,label.x,label.y+13,ww-10);
+      ctx.restore();
+    }
+  }
+  
   const inlineUi={name:inline.querySelector('.rvstudio-inline-head strong'),state:inline.querySelector('#rvstudio-inline-state'),packets:inline.querySelector('#rvstudio-inline-packets'),device:inline.querySelector('.rvstudio-inline-device'),zoom:inline.querySelector('#rvstudio-inline-zoom'),lite:modalUi.lite};
-  let cv=modalCanvas,ctx=cv.getContext('2d',{alpha:false}),ui=modalUi,inlineMode=false,inlineLab=null;
+  let cv=modalCanvas,ctx=cv.getContext('2d',{alpha:true}),ui=modalUi,inlineMode=false,inlineLab=null;
   let lab=null,raf=0,last=0,W=0,H=0,ratio=1,scale=65,cam={yaw:.54,target:.54,pitch:.55,zoom:1,centerX:0,centerZ:0},
       pointer=null,drag=false,chosen=null,hotspots=[],cableHits=[],previousFocus=null,lastTouch=0,
       perf={samples:0,elapsed:0,frameMs:0,drawMs:0,avgDrawMs:0,actualFps:0,autoLite:false};
@@ -431,6 +500,20 @@
       if(!simpleQuality())for(let j=1;j<=3;j++)point(p.x+(x-p.x)*(1-j*.09),.23+Math.sin(Math.PI*k)*.2,p.z+(z-p.z)*(1-j*.09),Math.max(.8,3-j*.7),rgba(tint,.30),false);
     }
   }
+  function tryGPU(){
+    const gpu=gpuForCurrent();if(!gpu)return false;
+    try{
+      // Pixel ratio is intentionally capped on iOS. The GPU uses a cached mesh;
+      // dragging updates camera uniforms instead of rebuilding every 3D face.
+      const quality=frameSimple?.72:(lite()?.67:.92);
+      if(!gpu.render(gpuSceneData(),cam,W,H,scale,quality))throw Error('WebGL context lost');
+      return true;
+    }catch(error){
+      console.warn('[Redes Vivas] Falha no WebGL: Canvas 2D restaurado.',error);
+      gpuFailed=true;updateGpuToggle();inlineGPUCanvas.hidden=true;modalGPUCanvas.hidden=true;
+      return false;
+    }
+  }
   function render(now){
     if((modal.hidden&&!inlineMode)||!lab){raf=0;return;}
     raf=requestAnimationFrame(render);
@@ -439,7 +522,7 @@
     if(lastThemeSignature!==signature){themeColorCache.clear();lastThemeSignature=signature;}
     // Keep direct touch interaction responsive, while saving battery at rest.
     const touching=!!pointer&&drag;
-    const delay=mobile()?(touching?27:(lite()?50:34)):(lite()?50:17);
+    const delay=mobile()?(touching?(lastGPU?16:27):(lite()?50:34)):(lite()?50:17);
     if(now-last<delay)return;
     const start=performance.now();
     if(!perf.elapsed)perf.elapsed=now;
@@ -452,23 +535,33 @@
     // Touch tracks the finger immediately. Buttons retain a short smooth turn.
     cam.yaw+=(cam.target-cam.yaw)*(touching?1:(mobile()?.30:.12));
     ctx.setTransform(ratio,0,0,ratio,0,0);
-    if(!bgGradient){
-      bgGradient=ctx.createLinearGradient(0,0,W,H);
-      bgGradient.addColorStop(0,'#030811');bgGradient.addColorStop(.55,'#07172c');bgGradient.addColorStop(1,'#041025');
-    }
-    ctx.fillStyle=bgGradient;ctx.fillRect(0,0,W,H);
-    if(!simpleQuality()){
-      if(!softGradient){
-        softGradient=ctx.createRadialGradient(W*.52,H*.61,10,W*.52,H*.61,W*.6);
-        softGradient.addColorStop(0,'rgba(19,126,193,.17)');softGradient.addColorStop(1,'rgba(2,7,17,0)');
+    const usingGPU=tryGPU();lastGPU=usingGPU;
+    if(usingGPU){
+      // Preserve labels/hit-testing, but draw all hardware and packet geometry
+      // with a single batched WebGL renderer. No Canvas 2D scene overdraw.
+      ctx.clearRect(0,0,W,H);
+    }else{
+      inlineGPUCanvas.hidden=true;modalGPUCanvas.hidden=true;
+      if(!bgGradient){
+        bgGradient=ctx.createLinearGradient(0,0,W,H);
+        bgGradient.addColorStop(0,'#030811');bgGradient.addColorStop(.55,'#07172c');bgGradient.addColorStop(1,'#041025');
       }
-      ctx.fillStyle=softGradient;ctx.fillRect(0,0,W,H);
+      ctx.fillStyle=bgGradient;ctx.fillRect(0,0,W,H);
+      if(!simpleQuality()){
+        if(!softGradient){
+          softGradient=ctx.createRadialGradient(W*.52,H*.61,10,W*.52,H*.61,W*.6);
+          softGradient.addColorStop(0,'rgba(19,126,193,.17)');softGradient.addColorStop(1,'rgba(2,7,17,0)');
+        }
+        ctx.fillStyle=softGradient;ctx.fillRect(0,0,W,H);
+      }
     }
     // Camadas is a lesson about protocol layers, NOT an equipment topology.
     // The previous release drew the illustrative hardware on TOP of the OSI
     // prisms and stole the layer hit targets. Keep only its own 3D diagram.
     if(lab.aba?.id==='camadas'){
       layers3d();
+    }else if(usingGPU){
+      drawGpuLabels();mediaLabels();
     }else{
       ground();cables();hotspots=[];
       const ns=frameNodes.slice().sort((a,b)=>{const p=pos(a),q=pos(b);return proj(q.x,0,q.z).depth-proj(p.x,0,p.z).depth});
@@ -522,7 +615,8 @@
     if(inlineMode){inline.hidden=true;inlineMode=false;}
     $('.rvstudio-stage').append(webPreview);
     lastWebKey='';webPreview.hidden=true;
-    cv=modalCanvas;ctx=cv.getContext('2d',{alpha:false});ui=modalUi;
+    cv=modalCanvas;ctx=cv.getContext('2d',{alpha:true});ui=modalUi;
+    activeTouchPoints.clear();pinchStart=null;pinchConsumed=false;
     previousFocus=document.activeElement;lab=l;chosen=null;
     ui.name.textContent=(l.aba?.titulo||l.def?.titulo||'Laboratório interativo')+(realNodes().length?'':' · representação ilustrativa');
     modal.hidden=false;document.body.classList.add('rvstudio-active');
@@ -542,11 +636,12 @@
     // Called when a tab or the 3D / diagram toggle changes.
     if(!modal.hidden){inlineLab=l;return;}
     if(inline.parentElement){inline.parentElement.classList.remove('rv3d-immersive','rv-web-scene');}
+    const previousLab=inlineLab;
     inline.hidden=true;inlineMode=false;inlineLab=null;
     if(raf){cancelAnimationFrame(raf);raf=0;}
     lab=null;
     if(!l||!l.cena||!l.elMoldura)return;
-    const previousLab=inlineLab;
+    activeTouchPoints.clear();pinchStart=null;pinchConsumed=false;
     inlineLab=l;lab=l;
     inline.classList.toggle('rv-layers',l.aba?.id==='camadas');
     inline.classList.toggle('rv-web-lab',l.aba?.id==='pagina-web');
@@ -555,7 +650,7 @@
     l.elMoldura.append(inline);l.elMoldura.classList.add('rv3d-immersive');
     l.elMoldura.classList.toggle('rv-web-scene',l.aba?.id==='pagina-web');
     inline.hidden=false;inlineMode=true;
-    cv=inlineCanvas;ctx=cv.getContext('2d',{alpha:false});ui=inlineUi;
+    cv=inlineCanvas;ctx=cv.getContext('2d',{alpha:true});ui=inlineUi;
     // Camera belongs to this scene. Carrying 225% zoom to another module
     // could push every object outside the viewport, looking like a black scene.
     if(previousLab!==l || !l._rv3dVisited){
@@ -576,16 +671,42 @@
     const op=button.dataset.camera;lastTouch=performance.now();
     if(op==='left')cam.target=clamp(cam.target-.27,-1.25,1.25);
     if(op==='right')cam.target=clamp(cam.target+.27,-1.25,1.25);
-    if(op==='reset'){cam.target=.54;cam.zoom=1;ui.zoom.textContent='100%';}
+    if(op==='reset'){cam.target=mobile()?.08:.54;cam.pitch=.55;cam.zoom=1;ui.zoom.textContent='100%';}
     if(op==='in')zoom(.2);if(op==='out')zoom(-.2);
   }));
   $('#rvstudio-in').addEventListener('click',()=>zoom(.2));
   $('#rvstudio-out').addEventListener('click',()=>zoom(-.2));
   ui.lite.addEventListener('click',()=>{document.documentElement.classList.toggle('fx-lite');ui.lite.setAttribute('aria-pressed',String(lite()));document.documentElement.dispatchEvent(new Event('rvqualitychange'));});
+  // Two-finger pinch zoom: operates on the original camera shared by the
+  // WebGL and 2D fallback renderers; never triggers an accidental cable tap.
+  const activeTouchPoints=new Map();
+  let pinchStart=null,pinchConsumed=false;
   function bindCanvasEvents(surface){
   surface.addEventListener('wheel',ev=>{ev.preventDefault();zoom(ev.deltaY>0?-.1:.1)},{passive:false});
-  surface.addEventListener('pointerdown',ev=>{lastTouch=performance.now();pointer={id:ev.pointerId,x:ev.clientX,y:ev.clientY,mx:ev.clientX,my:ev.clientY};drag=false;surface.setPointerCapture(ev.pointerId)});
-  surface.addEventListener('pointermove',ev=>{if(!pointer||pointer.id!==ev.pointerId)return;
+  surface.addEventListener('pointerdown',ev=>{
+    lastTouch=performance.now();
+    if(ev.pointerType==='touch'){
+      activeTouchPoints.set(ev.pointerId,{x:ev.clientX,y:ev.clientY});
+      if(activeTouchPoints.size===2){
+        const [a,b]=[...activeTouchPoints.values()];
+        pinchStart={distance:Math.max(1,Math.hypot(a.x-b.x,a.y-b.y)),zoom:cam.zoom};
+        pinchConsumed=true;pointer=null;drag=true;
+      }
+    }
+    if(!pinchStart){pointer={id:ev.pointerId,x:ev.clientX,y:ev.clientY,mx:ev.clientX,my:ev.clientY};drag=false;}
+    try{surface.setPointerCapture(ev.pointerId);}catch{}
+  });
+  surface.addEventListener('pointermove',ev=>{
+    if(activeTouchPoints.has(ev.pointerId)){
+      activeTouchPoints.set(ev.pointerId,{x:ev.clientX,y:ev.clientY});
+      if(pinchStart&&activeTouchPoints.size===2){
+        const [a,b]=[...activeTouchPoints.values()];
+        cam.zoom=clamp(pinchStart.zoom*Math.hypot(a.x-b.x,a.y-b.y)/pinchStart.distance,.7,2.25);
+        ui.zoom.textContent=Math.round(cam.zoom*100)+'%';
+        lastTouch=performance.now();return;
+      }
+    }
+    if(!pointer||pointer.id!==ev.pointerId)return;
     const dx=ev.clientX-pointer.x,dy=ev.clientY-pointer.y;
     if(Math.abs(ev.clientX-pointer.mx)+Math.abs(ev.clientY-pointer.my)>8)drag=true;
     if(drag){
@@ -596,7 +717,15 @@
     }
     pointer.x=ev.clientX;pointer.y=ev.clientY;
   });
-  surface.addEventListener('pointerup',ev=>{if(!pointer||pointer.id!==ev.pointerId)return;
+  surface.addEventListener('pointerup',ev=>{
+    if(activeTouchPoints.has(ev.pointerId))activeTouchPoints.delete(ev.pointerId);
+    if(pinchConsumed){
+      pointer=null;drag=false;
+      if(activeTouchPoints.size<2)pinchStart=null;
+      if(activeTouchPoints.size===0)pinchConsumed=false;
+      return;
+    }
+    if(!pointer||pointer.id!==ev.pointerId)return;
     if(!drag){const rect=cv.getBoundingClientRect(),x=ev.clientX-rect.left,y=ev.clientY-rect.top;
       const hit=hotspots.map(h=>({...h,d:h.rect&&x>=h.rect.x&&x<=h.rect.x+h.rect.w&&y>=h.rect.y&&y<=h.rect.y+h.rect.h?0:Math.hypot(h.x-x,h.y-y)})).sort((a,b)=>a.d-b.d)[0];
       // Click/tap the actual simulated cable to disconnect/reconnect it.
@@ -610,7 +739,11 @@
       else if(hit&&hit.d<hit.rad*1.6)select(hit.n);
     }pointer=null;
   });
-  surface.addEventListener('pointercancel',()=>{pointer=null});
+  surface.addEventListener('pointercancel',ev=>{
+    activeTouchPoints.delete(ev.pointerId);pointer=null;drag=false;
+    if(activeTouchPoints.size<2)pinchStart=null;
+    if(activeTouchPoints.size===0)pinchConsumed=false;
+  });
   }
   bindCanvasEvents(modalCanvas);bindCanvasEvents(inlineCanvas);
   modal.addEventListener('keydown',ev=>{
@@ -620,5 +753,5 @@
   });
   // Prevent keyboard shortcuts of the underlying simulator from running while the modal is open.
   modal.addEventListener('keydown',ev=>{if(ev.key===' '||ev.key==='PageUp'||ev.key==='PageDown'||ev.key==='r'||ev.key==='R')ev.stopPropagation()});
-  window.RedesVivasStudio={open,close,showInline,isOpen:()=>!modal.hidden,shouldSkip:l=>!modal.hidden||(inlineMode&&l===inlineLab),stats:()=>({fps:Math.round(perf.actualFps),avgDrawMs:+perf.avgDrawMs.toFixed(2),lastDrawMs:+perf.drawMs.toFixed(2),lite:lite(),nodes:lab?sceneNodes().length:0})};
+  window.RedesVivasStudio={open,close,showInline,isOpen:()=>!modal.hidden,shouldSkip:l=>!modal.hidden||(inlineMode&&l===inlineLab),stats:()=>({fps:Math.round(perf.actualFps),avgDrawMs:+perf.avgDrawMs.toFixed(2),lastDrawMs:+perf.drawMs.toFixed(2),lite:lite(),nodes:lab?sceneNodes().length:0,gpu:lastGPU,gpuFailed})};
 })();

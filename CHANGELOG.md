@@ -20,3 +20,17 @@ Consulte o histórico de commits para as etapas de abertura animada, projeção 
 - Separação visual dos nós 3D da abertura, sem alteração da cena de desktop.
 - Melhoria nos tamanhos das etiquetas e na legibilidade dos botões em aparelhos pequenos.
 - Ampliação da área 3D do módulo Página web para preservar a navegação e a montagem da página.
+
+
+## 18/11/2026 · 3D acelerado opcional / referência Netverse
+
+- Preservada versão anterior no branch `backup-estavel-antes-netverse-2026-11-18`.
+- Novo `js/gpu3d.js`: WebGL2 nativo, modelos 3D procedurais, bufferização da
+  topologia, cores e conexões com estado real do motor e pacotes dinâmicos.
+- FPS-alvo maior durante o arrasto acelerado e menor em repouso para economizar
+  bateria; DPR móvel limitado. Não constitui benchmark real em iPhone.
+- Alternância imediata **GPU / 2D** no celular e retorno automático ao 2D
+  quando WebGL2 não estiver disponível ou falhar.
+- Gesto de pinça para zoom e câmera centralizável, sem tocar na lógica dos módulos.
+- Referência de arquitetura estudada: `joaodorast/netverse-redes-vivas`.
+  Técnicas adaptadas de forma original, sem copiar arquivos não licenciados.
