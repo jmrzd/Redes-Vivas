@@ -1,6 +1,6 @@
 /* ==========================================================================
    CONFIGURAÇÃO DO GRUPO — edite só este bloco e salve o arquivo.
-   Troque os nomes abaixo pelos nomes dos integrantes (de 5 a 8 pessoas).
+   Equipe atual do projeto; exibida na aba Início.
    ========================================================================== */
 window.REDES_VIVAS = {
   projeto: "Redes Vivas",

@@ -1,3 +1,33 @@
+### Equipe de desenvolvimento
+
+1. João Miguel Silva de Rezende
+2. Keven Figueiral
+3. Wendell Jeronimo
+4. Luiz Eduardo Moreira da Silva
+5. Kauã Alves Charles Rocha
+6. João Pedro Santos e Silva
+7. Matheus Leal
+8. Adriell Procopio dos Santos
+9. Ibson Gabriel
+
+A lista no layout é lida de `js/config.js`.
+
+## Atualização de fluidez, sem trocar os modelos (18/11/2026)
+
+A aparência clássica de **todos os 12 laboratórios** foi restaurada, preservando as cenas projetadas em Canvas 2D, os modelos detalhados, os nomes, o navegador progressivo e as interações. A renderização WebGL experimental, que produziu equipamentos simplificados, foi retirada desta versão.
+
+**Correções de desempenho:**
+- Limites fixos de 17–19 ms entre quadros removidos no PC (em 60 Hz provocavam descarte alternado de quadros).
+- Laboratórios e abertura acompanham `requestAnimationFrame` com limite compatível com 60 Hz; aparelhos com taxa superior podem atualizar mais rapidamente quando houver capacidade.
+- A resolução interna do Canvas diminui gradualmente se o tempo gasto no desenho ficar alto, **sem diminuir os detalhes e nem trocar os modelos**; recupera a nitidez se houver folga.
+- O motor das aulas permanece separado do visual; as 12 experiências, os nomes dos integrantes e a alternância Diagrama/Cena 3D foram mantidos.
+
+**Importante:** 60 FPS é objetivo de desempenho, não garantia para todos os aparelhos. É necessário validar em um PC/celular físico para confirmar FPS e temperatura.
+
+**Segurança da mudança:** branch `backup-antes-3d-desktop-60fps-2026-11-18` e branch `backup-estavel-antes-netverse-2026-11-18` no GitHub preservam estados anteriores.
+
+---
+
 <div align="center">
 
 # 🌐 REDES VIVAS
@@ -251,72 +281,3 @@ Tudo é desenhado com Canvas 2D e CSS nativo, sem dependências adicionais. A l�
 | ![Abertura mobile com equipamentos separados](assets/preview-intro-mobile.webp) | ![Página Web mobile com duas linhas de equipamentos](assets/preview-web-mobile.webp) |
 
 **Validação:** navegação pelas 12 abas e verificação de erros de JavaScript e rolagem horizontal em 320×568, 375×667, 390×744, 430×932, 768×1024 e 1440×900, usando Chromium automatizado. O desempenho no Safari físico pode variar.
-
-## Equipe de desenvolvimento
-
-1. João Miguel Silva de Rezende
-2. Keven Figueiral
-3. Wendell Jeronimo
-4. Luiz Eduardo Moreira da Silva
-5. Kauã Alves Charles Rocha
-6. João Pedro Santos e Silva
-7. Matheus Leal
-8. Adriell Procopio dos Santos
-9. Ibson Gabriel
-
-Os nomes ficam em `js/config.js`.
-
-## Renderização acelerada opcional · novembro de 2026
-
-Esta revisão incorporou um **renderizador WebGL2 escrito para este projeto**, sem
-adicionar dependências externas. Inspirado nas soluções de desempenho observadas
-no projeto **[Netverse Redes Vivas](https://github.com/joaodorast/netverse-redes-vivas)**
-(React, Three.js, geometria procedural e qualidade adaptativa). Não foi
-transplantado código, modelo, textura ou asset daquele repositório: o código e
-os shaders WebGL presentes em `js/gpu3d.js` foram escritos especificamente
-para este projeto. O projeto de referência não apresenta licença geral de
-código; respeitamos essa limitação.
-
-**O que mudou:**
-
-- Em celulares compatíveis com WebGL2, a cena de equipamentos e pacotes usa a GPU
-  com geometria procedural 3D, malhas em lote e cache de posições/topologia.
-- Girar a câmera troca apenas os parâmetros do renderizador; não reconstrói
-  todos os equipamentos a cada movimento.
-- Qualidade (resolução) limitada no telefone para reduzir carga gráfica.
-- Gesto de dois dedos para aproximar/afastar, seleção de equipamentos e
-  desconexão de cabos continuam ligados ao simulador original.
-- Botão **GPU / 2D** no laboratório móvel: alterna imediatamente entre o
-  renderizador novo e o clássico. A preferência é lembrada localmente.
-- Sem WebGL2 ou em caso de falha, o desenho Canvas 2D antigo é mantido como
-  alternativa. A lição **Camadas OSI** segue com seu diagrama interativo 2D.
-- A versão de PC permanece visualmente igual à anterior.
-- Nenhuma das 12 simulações, experimentos, logs ou componentes acadêmicos foi
-  substituída.
-
-**Testes:** sintaxe de todos os JS e navegação nas 12 abas em Chromium em
-larguras 320 px, 390 px e 1440 px. O ambiente de navegador automatizado
-bloqueia a criação de contextos WebGL, portanto o caminho acelerado requer
-verificação visual e de fluidez em um aparelho real; não há promessa de FPS.
-
-**Recuperação:** branch Git `backup-estavel-antes-netverse-2026-11-18` contém o
-commit da versão original imediatamente anterior a esta integração.
-
-
-## Atualização desktop: GPU 3D e fluidez (18/11/2026)
-
-A partir desta versão, o renderizador **WebGL2 original** pode ser usado também no PC — antes estava restrito ao celular. A interface do laboratório recebeu pequenos refinamentos visuais (controles, painéis translúcidos e indicadores), e o módulo **Camadas OSI** ganhou duas torres de geometria 3D real com destaque das etapas de encapsulamento. O Canvas 2D anterior continua disponível.
-
-**Desempenho e controle:**
-
-- Removido o limite de 17 ms do loop 3D no desktop, que podia resultar em cerca de 30 FPS em monitores de 60 Hz. O loop é sincronizado com `requestAnimationFrame`, sem prometer uma taxa fixa.
-- A abertura 3D também deixou de bloquear quadros com um limite de 19 ms no PC.
-- Novo indicador de **FPS observado** na cena, atualizado periodicamente; não confundir com garantia de 60 FPS.
-- Qualidade adaptativa: redução gradual da resolução WebGL quando a taxa observada cai; recuperação progressiva após estabilidade.
-- Malhas geométricas em buffers GPU, atualizadas apenas quando a topologia muda; rotação altera apenas os parâmetros de câmera; o tráfego usa o relógio real da simulação.
-- **GPU 3D / 2D clássico** disponível no PC e celular. Ao não haver WebGL2, o fallback clássico entra automaticamente. Selecione o modo que apresentar melhor desempenho no aparelho.
-- Não foi migrado para React. React sozinho não acelera renderização; aqui WebGL2 utiliza a GPU diretamente, com zero novas dependências e sem reescrever o motor educacional.
-
-**Verificação:** sintaxe JavaScript, navegação nas 12 abas em 1440×900, 390×844 e 320×680; teste de WebGL2 com contexto simulado, incluindo malhas das camadas e todas as abas, e alternância para Canvas 2D. O navegador de testes neste ambiente bloqueia contexto WebGL real, então não foi possível validar visualmente o desenho GPU nem medir o FPS em uma GPU física. É necessária uma checagem em desktop e celular reais. Nenhuma performance foi prometida como garantida.
-
-**Backup:** branch `backup-antes-3d-desktop-60fps-2026-11-18` foi criada antes da atualização. A versão mais antiga também está na branch `backup-estavel-antes-netverse-2026-11-18`.

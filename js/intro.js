@@ -50,6 +50,7 @@
   let W=0,H=0,dpr=1,scale=90,raf=0,last=0, running=true;
   let yaw=.37, baseYaw=.37, tilt=.42, wantedTilt=.42, zoom=1;
   let pan=0, pointer=null, dragged=false, selected=-1, lite=false, elapsed=0, hits=[];
+  let density=1, paintAverage=0, paintSamples=0;
   const mobile = () => mqMobile.matches && window.innerHeight >= window.innerWidth;
   const reduced = () => prefersReduced || lite;
   function rgba(hex,alpha) {
@@ -59,7 +60,7 @@
   function resize() {
     W=Math.max(280,canvas.clientWidth); H=Math.max(300,canvas.clientHeight);
     arrangeDevices();
-    dpr=Math.min(devicePixelRatio||1,lite ? 1 : mobile()?1.25:1.65);
+    dpr=Math.max(.72,Math.min(devicePixelRatio||1,lite ? 1 : mobile()?1.25:1.65)*density);
     // Setting canvas.width or height ALWAYS clears the drawing. Wheel zoom
     // previously called resize() for every wheel event, so fast scrolling
     // continuously erased the scene before requestAnimationFrame could paint.
@@ -280,11 +281,10 @@
   function drawScene(ms) {
     if(!running)return;
     if(document.hidden){last=ms;raf=requestAnimationFrame(drawScene);return;}
+    // 19ms previously forced 30fps on 60Hz displays; let rAF drive 60fps.
     const delta=last?ms-last:16;
-    // requestAnimationFrame already syncs to the display. A 19 ms cap skips
-    // every other frame on 60 Hz monitors, making the opening feel like 30 FPS.
-    // Keep the mobile 30 FPS battery-saving cap, but allow desktop 60 Hz.
-    if(last && delta<(mobile()?29:15)){raf=requestAnimationFrame(drawScene);return;}
+    if(last && delta<(lite||prefersReduced?31:11)){raf=requestAnimationFrame(drawScene);return;}
+    const paintStart=performance.now();
     elapsed+=clamp(delta,0,80);last=ms;
     // Gentle continuous camera motion; gestures suspend auto orbit.
     const drift=pointer||reduced()||mobile()?0:Math.sin(elapsed*.00023)*.10;
@@ -305,6 +305,17 @@
     }
     // Draw labels after geometry so a rear server never covers a name pill.
     for(const n of sorted)drawLabels(n);
+    // Keep the original scene and details; on slow devices only the backing
+    // pixel density adapts. Never switch device artwork to simple boxes.
+    const cost=performance.now()-paintStart;
+    paintAverage=paintSamples?paintAverage*.95+cost*.05:cost;
+    paintSamples++;
+    if(paintSamples%100===0&&!lite&&!prefersReduced){
+      const before=density;
+      if(paintAverage>18 && density>.74)density=Math.max(.74,density-.10);
+      else if(paintAverage<9 && density<1)density=Math.min(1,density+.05);
+      if(density!==before)resize();
+    }
     raf=requestAnimationFrame(drawScene);
   }
   function leave(module,autoplay=false) {

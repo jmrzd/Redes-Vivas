@@ -3927,7 +3927,9 @@ const App = {
   rotuloTema() { this.bTema.textContent = Tema.ehEscuro() ? 'Tema claro' : 'Tema escuro'; },
 
   laco(t) {
-    const fpsDelay = document.documentElement.classList.contains('fx-lite') || window.innerWidth <= 760 || window.matchMedia('(prefers-reduced-motion: reduce)').matches ? 33 : 16;
+    // rAF already synchronizes with the monitor; 16ms could skip every other
+    // frame at 60Hz due to timer jitter. Aim for a frame on every refresh.
+    const fpsDelay = document.documentElement.classList.contains('fx-lite') || window.matchMedia('(prefers-reduced-motion: reduce)').matches ? 31 : 11;
     if (!document.hidden && !document.body.classList.contains('intro-active') && this.labAtivo &&
         (!this._ultimoRender || t - this._ultimoRender >= fpsDelay)) {
       this.labAtivo.quadro(t, !!window.RedesVivasStudio?.shouldSkip?.(this.labAtivo));
