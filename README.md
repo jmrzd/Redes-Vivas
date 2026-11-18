@@ -301,3 +301,22 @@ verificação visual e de fluidez em um aparelho real; não há promessa de FPS.
 
 **Recuperação:** branch Git `backup-estavel-antes-netverse-2026-11-18` contém o
 commit da versão original imediatamente anterior a esta integração.
+
+
+## Atualização desktop: GPU 3D e fluidez (18/11/2026)
+
+A partir desta versão, o renderizador **WebGL2 original** pode ser usado também no PC — antes estava restrito ao celular. A interface do laboratório recebeu pequenos refinamentos visuais (controles, painéis translúcidos e indicadores), e o módulo **Camadas OSI** ganhou duas torres de geometria 3D real com destaque das etapas de encapsulamento. O Canvas 2D anterior continua disponível.
+
+**Desempenho e controle:**
+
+- Removido o limite de 17 ms do loop 3D no desktop, que podia resultar em cerca de 30 FPS em monitores de 60 Hz. O loop é sincronizado com `requestAnimationFrame`, sem prometer uma taxa fixa.
+- A abertura 3D também deixou de bloquear quadros com um limite de 19 ms no PC.
+- Novo indicador de **FPS observado** na cena, atualizado periodicamente; não confundir com garantia de 60 FPS.
+- Qualidade adaptativa: redução gradual da resolução WebGL quando a taxa observada cai; recuperação progressiva após estabilidade.
+- Malhas geométricas em buffers GPU, atualizadas apenas quando a topologia muda; rotação altera apenas os parâmetros de câmera; o tráfego usa o relógio real da simulação.
+- **GPU 3D / 2D clássico** disponível no PC e celular. Ao não haver WebGL2, o fallback clássico entra automaticamente. Selecione o modo que apresentar melhor desempenho no aparelho.
+- Não foi migrado para React. React sozinho não acelera renderização; aqui WebGL2 utiliza a GPU diretamente, com zero novas dependências e sem reescrever o motor educacional.
+
+**Verificação:** sintaxe JavaScript, navegação nas 12 abas em 1440×900, 390×844 e 320×680; teste de WebGL2 com contexto simulado, incluindo malhas das camadas e todas as abas, e alternância para Canvas 2D. O navegador de testes neste ambiente bloqueia contexto WebGL real, então não foi possível validar visualmente o desenho GPU nem medir o FPS em uma GPU física. É necessária uma checagem em desktop e celular reais. Nenhuma performance foi prometida como garantida.
+
+**Backup:** branch `backup-antes-3d-desktop-60fps-2026-11-18` foi criada antes da atualização. A versão mais antiga também está na branch `backup-estavel-antes-netverse-2026-11-18`.

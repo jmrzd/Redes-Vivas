@@ -281,7 +281,10 @@
     if(!running)return;
     if(document.hidden){last=ms;raf=requestAnimationFrame(drawScene);return;}
     const delta=last?ms-last:16;
-    if(last && delta<(mobile()?29:19)){raf=requestAnimationFrame(drawScene);return;}
+    // requestAnimationFrame already syncs to the display. A 19 ms cap skips
+    // every other frame on 60 Hz monitors, making the opening feel like 30 FPS.
+    // Keep the mobile 30 FPS battery-saving cap, but allow desktop 60 Hz.
+    if(last && delta<(mobile()?29:15)){raf=requestAnimationFrame(drawScene);return;}
     elapsed+=clamp(delta,0,80);last=ms;
     // Gentle continuous camera motion; gestures suspend auto orbit.
     const drift=pointer||reduced()||mobile()?0:Math.sin(elapsed*.00023)*.10;

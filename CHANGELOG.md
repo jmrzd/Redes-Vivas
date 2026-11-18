@@ -34,3 +34,15 @@ Consulte o histórico de commits para as etapas de abertura animada, projeção 
 - Gesto de pinça para zoom e câmera centralizável, sem tocar na lógica dos módulos.
 - Referência de arquitetura estudada: `joaodorast/netverse-redes-vivas`.
   Técnicas adaptadas de forma original, sem copiar arquivos não licenciados.
+
+
+## 18/11/2026 — WebGL2 no PC, OSI volumétrico, frame pacing e FPS real
+
+- Ativado renderizador GPU também em computadores, mantendo desenho 2D alternativo.
+- Reforçadas geometrias de dispositivos e camadas OSI; melhorados cartões e controles com CSS responsivo.
+- Corrigidos limites de intervalo que reduziam a fluidez em monitores de 60 Hz: laboratório 17 ms e abertura 19 ms.
+- Inserido indicador de FPS medido e qualidade adaptativa, sem garantir FPS fixo em hardware não testado.
+- Corrigido indicador de modo em navegadores sem WebGL2 e reorganizada a barra de estado móvel.
+- O simulador didático, registros e experimentos não foram substituídos por React.
+- Testado em 12 abas, tamanhos PC/celular, GPU simulada e fallback, com validação de sintaxe; benchmark físico ainda pendente.
+- Backup: `backup-antes-3d-desktop-60fps-2026-11-18`.

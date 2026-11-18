@@ -29,11 +29,12 @@
     out vec3 v_color;
     void main(){
       float x=a_position.x-u_center.x, z=a_position.z-u_center.z;
+      float y=a_position.y-u_center.y;
       float co=cos(u_camera.x),si=sin(u_camera.x);
       float rx=x*co-z*si,rz=x*si+z*co;
       float persp=1.0/(1.0+rz*.023), f=u_camera.y*persp;
       float px=u_screen.x*.5+rx*f;
-      float py=u_screen.y*u_camera.w+(rz*u_camera.z-a_position.y*.91)*f;
+      float py=u_screen.y*u_camera.w+(rz*u_camera.z-y*.91)*f;
       gl_Position=vec4(px/u_screen.x*2.0-1.0,1.0-py/u_screen.y*2.0,clamp(rz*.021,-.96,.96),1.0);
       v_color=a_color;
     }`;
@@ -95,10 +96,13 @@
             this.box(x+.11,yy+.063,z+.443,.23,.025,.018,'#5a96ad');
           }
           this.box(x,1.73,z,.87,.075,.82,steel);
+          for(let i=0;i<4;i++)this.box(x-.25+i*.17,1.76,z+.05,.12,.015,.44,main);
+          this.box(x,1.83,z,.16,.025,.17,led);
           break;
         }
         case 'pc': case 'laptop': {
           this.box(x,.11,z,1.32,.11,.97,'#314e68');
+          this.box(x,.11,z+.40,1.26,.045,.12,main,.92);
           this.box(x,.22,z-.39,1.23,.90,.12,'#527e9c');
           this.box(x,.29,z-.317,1.08,.72,.018,'#0c344c');
           this.box(x,.46,z-.299,.62,.025,.013,main);
@@ -153,7 +157,7 @@
   }
   function init(canvas){
     let gl;
-    try{gl=canvas.getContext('webgl2',{alpha:true,depth:true,antialias:false,powerPreference:'low-power',premultipliedAlpha:true,preserveDrawingBuffer:false});
+    try{gl=canvas.getContext('webgl2',{alpha:true,depth:true,antialias:true,powerPreference:'default',premultipliedAlpha:true,preserveDrawingBuffer:false});
       if(!gl)return null;}catch{return null;}
     let p,buffer,linesBuffer,packetBuffer,attrs,uniforms;
     try{
@@ -161,11 +165,11 @@
       attrs={pos:gl.getAttribLocation(p,'a_position'),color:gl.getAttribLocation(p,'a_color')};
       uniforms={screen:gl.getUniformLocation(p,'u_screen'),camera:gl.getUniformLocation(p,'u_camera'),center:gl.getUniformLocation(p,'u_center')};
     }catch(e){console.warn('[Redes Vivas] GPU indisponível, voltando ao Canvas 2D:',e.message);return null;}
-    let w=0,h=0,dpr=0,key='',triangles=0,lines=0,mesh=null,blocked=false,quality=.88;
+    let w=0,h=0,dpr=0,key='',triangles=0,lines=0,mesh=null,blocked=false,quality=1;
     canvas.addEventListener('webglcontextlost',e=>{e.preventDefault();blocked=true;});
     canvas.addEventListener('webglcontextrestored',()=>{blocked=true;}); // fail safe: reload selects Canvas 2D
     function resize(W,H,qualityFactor){
-      const ratio=Math.min(window.devicePixelRatio||1,Math.max(.6,qualityFactor||quality));
+      const ratio=Math.min(window.devicePixelRatio||1,Math.max(.58,Math.min(1.5,qualityFactor||quality)));
       const sw=Math.max(1,Math.round(W*ratio)),sh=Math.max(1,Math.round(H*ratio));
       if(canvas.width!==sw||canvas.height!==sh){canvas.width=sw;canvas.height=sh;gl.viewport(0,0,sw,sh);}
       w=W;h=H;dpr=ratio;
@@ -182,6 +186,20 @@
     }
     function build(scene){
       const m=new Mesh(), nodes=scene.nodes,loc=scene.locations;
+      if(scene.mode==='layers'){
+        const tints=['#44f1c4','#3be2d8','#52ceff','#479eff','#e9c962','#ad8bfa','#a4cde7'];
+        for(const side of [-1,1])for(let i=0;i<7;i++){
+          const x=side*2.65,y=.30+(6-i)*.65;
+          const selected=scene.layerSelected===i, active=(side<0?scene.layerSource:scene.layerTarget)===i;
+          const color=selected?'#68ebdf':tints[i];
+          m.disc(x,y-.10,0,1.2,selected?'#49eec7':'#24486a',20);
+          m.box(x,y,0,3.65,.48,1.36,color,active?1.36:(selected?1.14:.73));
+          // Small physical highlight on the leading face of the active layer.
+          if(active)m.box(x,y+.30,.70,2.60,.07,.035,'#f0fcff');
+        }
+        mesh=m;upload(gl.ARRAY_BUFFER,buffer,m.tri);upload(gl.ARRAY_BUFFER,linesBuffer,m.lines);
+        triangles=m.tri.length/6;lines=m.lines.length/6;return;
+      }
       let x0=Infinity,x1=-Infinity,z0=Infinity,z1=-Infinity;
       for(const n of nodes){const v=loc.get(n);if(!v)continue;x0=Math.min(x0,v.x);x1=Math.max(x1,v.x);z0=Math.min(z0,v.z);z1=Math.max(z1,v.z);}
       if(!Number.isFinite(x0)){x0=-3;x1=3;z0=-2;z1=2;}
@@ -202,7 +220,13 @@
       // Informative fallback diagram for content that has no equipment nodes.
       if(!scene.hasRealNodes)for(let i=0;i<nodes.length-1;i++)m.wire(loc.get(nodes[i]),loc.get(nodes[i+1]),'#36b6ed');
       for(const n of nodes){
-        const v=loc.get(n);if(v)m.equipment(n,v,scene.tint(n));
+        const v=loc.get(n);if(v){
+          m.equipment(n,v,scene.tint(n));
+          if(n.id===scene.selectedId){
+            m.disc(v.x,-.095,v.z,.88,'#3afad5',24);
+            m.box(v.x,-.07,v.z,1.47,.025,1.35,'#32f1ce',.9);
+          }
+        }
       }
       mesh=m;upload(gl.ARRAY_BUFFER,buffer,m.tri);upload(gl.ARRAY_BUFFER,linesBuffer,m.lines);
       triangles=m.tri.length/6;lines=m.lines.length/6;
@@ -219,7 +243,7 @@
       gl.uniform4f(uniforms.camera,cam.yaw,scale,cam.pitch,W<650?.56:.62);
       gl.uniform3f(uniforms.center,cam.centerX,0,cam.centerZ);
       draw(buffer,triangles,gl.TRIANGLES);
-      gl.disable(gl.DEPTH_TEST);draw(linesBuffer,lines,gl.LINES);
+      gl.enable(gl.DEPTH_TEST);draw(linesBuffer,lines,gl.LINES);
       const packet=new Mesh();
       for(const pk of scene.packets){
         if(!pk.vivo||!pk.caminho||pk.caminho.length<2)continue;
@@ -233,8 +257,7 @@
         const x=from.x+(to.x-from.x)*k,z=from.z+(to.z-from.z)*k,y=.25+Math.sin(Math.PI*k)*.22;
         packet.box(x,y,z,.16,.16,.16,COLORS[pk.tipo]||'#b3f6ff');
       }
-      upload(gl.ARRAY_BUFFER,packetBuffer,packet.tri);
-      gl.enable(gl.DEPTH_TEST);draw(packetBuffer,packet.tri.length/6,gl.TRIANGLES);
+      if(packet.tri.length){upload(gl.ARRAY_BUFFER,packetBuffer,packet.tri);gl.enable(gl.DEPTH_TEST);draw(packetBuffer,packet.tri.length/6,gl.TRIANGLES);}
       return !gl.isContextLost();
     }
     return {render,resize,lose:()=>{blocked=true;try{gl.getExtension('WEBGL_lose_context')?.loseContext();}catch{}},get active(){return !blocked},stats:()=>({triangles:triangles/3,lines:lines/2,pixelRatio:dpr})};
